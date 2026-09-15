@@ -1,0 +1,10 @@
+import RouteBlock from "./Route.js";
+import { manifest } from "./manifest.js";
+import type { BlockPackage } from "@imagoro/core";
+
+export { manifest };
+export { RouteBlock };
+export default {
+  manifest,
+  component: RouteBlock,
+} satisfies BlockPackage;

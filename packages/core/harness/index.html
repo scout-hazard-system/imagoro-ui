@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>imagoro-ui · core harness</title>
+    <link rel="stylesheet" href="../../../design/gen.css" />
+    <link rel="stylesheet" href="./src/harness.css" />
+  </head>
+  <body>
+    <main class="layout">
+      <header class="card header">
+        <div>
+          <h1>imagoro-ui core harness</h1>
+          <p class="sub">M1 dev harness — mounts any registered block against fixtures/events.json</p>
+        </div>
+        <div class="status-group">
+          <span id="badge" class="pill mute">fixtures: …</span>
+          <span id="status" class="pill ok">booting</span>
+        </div>
+      </header>
+      <section id="slots" class="grid"></section>
+    </main>
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>

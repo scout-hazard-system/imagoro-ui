@@ -1,0 +1,28 @@
+/*
+ * gen.qss — PySide6/Qt stylesheet emission (STUB).
+ * Generated from design/tokens.json by design/gen-qss.mjs.
+ * Consumed by the legacy adapter-qt (scout_crew gui.py DARK_QSS); not yet built.
+ * Spot values are emitted for parity checks; full QSS rewrite lands with adapter-qt.
+ */
+
+QMainWindow, QWidget {
+  background-color: #0B1020;
+  color: #E2E8F0;
+}
+
+QMainWindow, QWidget { font-size: 13px; }
+QPlainTextEdit, QTextEdit { font-family: 'Cascadia Code', Consolas, 'Courier New', monospace; }
+
+QPushButton {
+  background-color: #1D4ED8;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+}
+QPushButton:hover { background-color: #2563EB; }
+
+QGroupBox::title {
+  color: #93C5FD;
+}
+
+/* TODO(adapter-qt): port remaining DARK_QSS rules from gui.py, keyed on tokens. */

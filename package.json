@@ -5,15 +5,15 @@
   "description": "Composable block GUI + node canvas framework, React-first, for the Scout suite",
   "license": "Apache-2.0",
   "packageManager": "pnpm@9.15.0",
-  "workspaces": [
-    "packages/*",
-    "blocks/*"
-  ],
   "scripts": {
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "dev": "pnpm --filter @imagoro/renderer-react dev",
-    "gen:tokens": "node design/gen-css.mjs",
+    "dev:core": "pnpm --filter @imagoro/core-harness dev",
+    "gen:tokens": "node design/gen-css.mjs && node design/gen-qss.mjs && node design/gen-android.mjs",
+    "gen:css": "node design/gen-css.mjs",
+    "gen:qss": "node design/gen-qss.mjs",
+    "gen:android": "node design/gen-android.mjs",
     "smoke": "node scripts/smoke.mjs"
   }
 }

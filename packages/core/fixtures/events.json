@@ -1,0 +1,40 @@
+{
+  "meta": {
+    "id": "imagoro.core.fixtures.main",
+    "title": "imagoro-ui core replay fixtures",
+    "description": "Snapshot + event stream replay set, normalized to BusEvent {type, ts, payload}. Shapes poached from routing nav/frontend dev_server.py (pipeline metrics, SSE event_type), scout_crew blackboard (pipeline category), and route/map/weather event shapes."
+  },
+  "snapshot": {
+    "ts": 1899300000000,
+    "event_type_counts": {
+      "pipeline_ready": 1,
+      "chunk_captured": 3,
+      "chunk_skipped_silence": 2,
+      "chunk_skipped_clipped": 1,
+      "alert_triggered": 2,
+      "run_summary": 1
+    },
+    "metrics": {
+      "captured": 12,
+      "skipped_silence": 8,
+      "skipped_clipped": 3,
+      "llm_alert": 2,
+      "soft_alert_fallback": 1
+    }
+  },
+  "stream": [
+    { "type": "pipeline_ready", "ts": 1899298000000, "payload": { "source": "dev_server", "host": "127.0.0.1:18080" } },
+    { "type": "chunk_captured", "ts": 1899298001000, "payload": { "transcript": "Unit 23 copy, running radar on I-5 northbound at mile marker 212, vehicle stop in progress near the Shell station.", "energy": 0.72, "rms": 0.31, "clip_ratio": 0.02 } },
+    { "type": "chunk_skipped_silence", "ts": 1899298002500, "payload": { "seq": 2 } },
+    { "type": "chunk_captured", "ts": 1899298004000, "payload": { "transcript": "Dispatch, medical at the 405/101 interchange, Code 3 response, ETA 6 minutes.", "energy": 0.81, "rms": 0.44, "clip_ratio": 0.05 } },
+    { "type": "alert_triggered", "ts": 1899298006000, "payload": { "kind": "llm_alert", "alert": "Possible hazardous-materials incident: fire response dispatched near the 405/101 interchange.", "transcript": "Dispatch, medical at the 405/101 interchange, Code 3 response, ETA 6 minutes.", "lat": 34.0522, "lon": -118.2437 } },
+    { "type": "jurisdiction_proximity", "ts": 1899298007500, "payload": { "message": "Approaching boundary of Los Angeles County into Orange County." } },
+    { "type": "chunk_skipped_clipped", "ts": 1899298009000, "payload": { "seq": 5 } },
+    { "type": "chunk_captured", "ts": 1899298012000, "payload": { "transcript": "Any unit with a plate reader near Rosecrans, looking for a silver sedan, last seen eastbound.", "energy": 0.64, "rms": 0.28, "clip_ratio": 0.01 } },
+    { "type": "route_planned", "ts": 1899298015000, "payload": { "start": "Shell Station, I-5 MM212", "end": "405/101 Interchange", "duration_ms": 360000, "distance_m": 18300, "route_points": [ { "lat": 34.04, "lon": -118.25 }, { "lat": 34.045, "lon": -118.24 }, { "lat": 34.0522, "lon": -118.2437 } ] } },
+    { "type": "weather_forecast", "ts": 1899298016000, "payload": { "start": "Shell Station, I-5 MM212", "end": "405/101 Interchange", "forecast": [ { "segment": "start", "time": "Now", "temp_c": 25, "condition": "clear" }, { "segment": "segment-1", "time": "+20m", "temp_c": 26, "condition": "partly_cloudy" }, { "segment": "destination", "time": "+40m", "temp_c": 24, "condition": "light_rain" } ] } },
+    { "type": "blackboard_entry", "ts": 1899298018000, "payload": { "category": "pipeline", "role": "alert", "kind": "raw", "title": "I-5 NB MM212 vehicle stop", "body": "Unit 23 on scene, traffic affected in right lane.", "tags": ["i-5", "northbound", "vehicle-stop"], "author": "unit-23" } },
+    { "type": "alert_triggered", "ts": 1899298020000, "payload": { "kind": "soft_alert_fallback", "alert": "Silver sedan wanted near Rosecrans eastbound; public info request.", "transcript": "Any unit with a plate reader near Rosecrans, looking for a silver sedan, last seen eastbound.", "lat": 33.9045, "lon": -118.3879 } },
+    { "type": "run_summary", "ts": 1899298025000, "payload": { "captured": 12, "skipped_silence": 8, "skipped_clipped": 3, "llm_alert": 2, "soft_alert_fallback": 1 } }
+  ]
+}

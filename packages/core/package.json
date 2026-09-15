@@ -5,11 +5,18 @@
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./fixtures.node": "./src/fixtures.node.ts",
+    "./fixtures/events.json": "./fixtures/events.json"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "vitest run"
   },
   "devDependencies": {
+    "@types/node": "^20.11.0",
+    "jsdom": "^24.0.0",
     "typescript": "^5.6.0",
     "vitest": "^2.1.0"
   }

@@ -46,12 +46,44 @@ export interface Block {
   unmount(): void;
 }
 
-export type BlockImpl = { new (): Block } | Block;
+/** Block-package seam (substrate-neutral). The `component` is renderer-specific: the React
+ *  host adapts an FC over BlockRenderProps into a core `Block`; legacy JVM/Qt adapters wrap
+ *  their own components. Core itself stays React-free. */
+export interface BlockPackage {
+  manifest: BlockManifest;
+  component: unknown;
+}
+
+export interface BlockRenderProps {
+  manifest: BlockManifest;
+  config: Record<string, unknown>;
+  state: BlockState;
+  dispatch: (evt: BusEvent) => void;
+}
+
+export interface MountSpec {
+  id: string;
+  config?: Record<string, unknown>;
+}
 
 export interface BlockHandle {
+  id: number;
+  slot: HTMLElement;
+  blockId: string;
   update(config: Record<string, unknown>): void;
   unmount(): void;
 }
 
-// placeholder; registry + event bus implemented in M1 (src/registry.ts, src/eventbus.ts)
+export type LegacyEvent = Record<string, unknown>;
+
+export interface FixtureSet {
+  meta: {
+    id: string;
+    title: string;
+    description?: string;
+  };
+  snapshot: JsonObject;
+  stream: BusEvent[];
+}
+
 export const version = "0.1.0";

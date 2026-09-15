@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  gen.colors.xml — Android resource emission (STUB).
+  Generated from design/tokens.json by design/gen-android.mjs.
+  Consumed by webview-android / Compose (M6); not yet used by SecureMesh adapters.
+  Naming mirrors legacy values/colors.xml (bg_main, text_primary, ...).
+-->
+<resources>
+    <color name="bg_main">#0B1020</color>
+    <color name="bg_surface">#141C2D</color>
+    <color name="bg_input">#020617</color>
+    <color name="text_primary">#E8EEFF</color>
+    <color name="text_muted">#9FB0CF</color>
+    <color name="text_strong">#F8FAFC</color>
+    <color name="accent">#4F8CFF</color>
+    <color name="accent_dark">#2455C5</color>
+    <color name="accent_hover">#2563EB</color>
+    <color name="chip_ok">#9FF7AE</color>
+    <color name="chip_warn">#FFD686</color>
+</resources>

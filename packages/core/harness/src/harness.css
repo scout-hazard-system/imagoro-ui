@@ -1,0 +1,40 @@
+.bb-slot {
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-m);
+  min-height: 120px;
+  background: var(--bg-surface-alpha);
+}
+.bb-slot-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: var(--spacing-s);
+}
+.bb-block .bb-stream {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+}
+.bb-event {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+.bb-ev-type {
+  color: var(--accent);
+  white-space: nowrap;
+  min-width: 130px;
+}
+.bb-event code {
+  color: var(--text-body);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bb-foot {
+  margin-top: 8px;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}

@@ -1,0 +1,22 @@
+{
+    "name":  "@imagoro/block-pipeline",
+    "version":  "0.1.0",
+    "license":  "Apache-2.0",
+    "type":  "module",
+    "main":  "./src/index.tsx",
+    "types":  "./src/index.tsx",
+    "scripts":  {
+                    "build":  "tsc -p tsconfig.json",
+                    "test":  "vitest run"
+                },
+    "dependencies":  {
+                         "@imagoro/core":  "workspace:*",
+                         "react":  "^18.3.1"
+                     },
+    "devDependencies":  {
+                            "@types/react":  "^18.3.0",
+                            "typescript":  "^5.6.0",
+                            "vitest":  "^2.1.0",
+                            "@types/node":  "^22.0.0"
+                        }
+}
