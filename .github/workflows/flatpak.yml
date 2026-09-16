@@ -1,0 +1,61 @@
+name: flatpak
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "packaging/*"
+
+jobs:
+  flatpak:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+            src-tauri/target
+          key: flatpak-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Install toolchain deps (webkit2gtk etc.)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev librsvg2-dev patchelf
+          flatpak install -y --noninteractive org.gnome.Sdk//46 org.gnome.Platform//46
+
+      - name: Build (web + tauri)
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm --filter @imagoro/command-center build
+          pnpm tauri build
+
+      - name: Flatpak-builder bundle
+        run: |
+          flatpak-builder --user --force-clean --ccache flatpak-build infra/flatpak/org.scout.imagoro.json
+          flatpak build-export export-repo flatpak-build
+          flatpak build-bundle /var/lib/flatpak/repo imagoro.flatpak org.scout.imagoro
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: imagoro-flatpak
+          path: imagoro.flatpak
