@@ -1,4 +1,5 @@
 import type { BusEvent } from "./types.js";
+import { canWrite, normalizeRole, type BlackboardKind, type Role } from "./acl.js";
 
 export type Subscriber = (evt: BusEvent) => void;
 
@@ -54,10 +55,18 @@ export function connectSse(opts: SseClientOptions): () => void {
 export interface BlackboardClientOptions {
   baseUrl: string;
   category: string;
+  role?: Role;
 }
 
 export class BlackboardClient {
-  constructor(private readonly opts: BlackboardClientOptions) {}
+  private readonly role: Role;
+  constructor(private readonly opts: BlackboardClientOptions) {
+    this.role = normalizeRole(opts.role);
+  }
+
+  get scope(): Role {
+    return this.role;
+  }
 
   private endpoint(kind: string): string {
     return `${this.opts.baseUrl}/v1/${kind}`;
@@ -72,7 +81,12 @@ export class BlackboardClient {
     return (body[this.opts.category] ?? {}) as Record<string, unknown>;
   }
 
-  async write(key: string, payload: unknown, kind = "raw"): Promise<void> {
+  async write(key: string, payload: unknown, kind: BlackboardKind = "raw"): Promise<void> {
+    if (!canWrite(this.role, this.opts.category, kind)) {
+      throw new Error(
+        `blackboard write denied: role "${this.role}" cannot write "${kind}" in "${this.opts.category}"`
+      );
+    }
     const res = await fetch(this.endpoint("write"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
