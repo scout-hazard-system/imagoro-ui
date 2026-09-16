@@ -2,7 +2,7 @@
 
 **One shared React-first codebase running every in-repo front-end of the Scout suite.** Modularity at the forefront; the target product is a multilayered CRM (personal business/analytics → enterprise). Phase 1 poaches the existing UI layer (Java/Kotlin/Python/Qt/Swing/Android) behind a substrate-neutral block contract, then shifts to React as the canonical renderer.
 
-Status: **M0/M1 initiating.** Repo: `scout-hazard-system/imagoro-ui` (new). Host OS for phase 1: Windows (this machine); Linux/Flatpak and Android/FOSS dev processes documented for later phases.
+Status: **M0–M6 shipped** (web track verified end-to-end; desktop/Linux/Android tracks config-verified — host lacks Rust/MSVC and Android SDK/JDK). Repo: `scout-hazard-system/imagoro-ui`. Host OS for phase 1: Windows (this machine); Linux/Flatpak and Android/FOSS dev processes documented in `docs/dev-process.md` + `infra/flatpak/` + `infra/webview-android/` (M6).
 
 ---
 
@@ -64,13 +64,13 @@ imagoro-ui/
 
 ## 3. Phases
 
-- **M0 — Spec & tokens** *(started)*: `docs/block-spec.md` v0.1, consolidated `design/tokens.json`, `PLAN.md`. Emissions: CSS-vars generator; QSS/Compose generator stubs.
-- **M1 — Core**: `packages/core`: `BlockRegistry` (`register/mount/unmount/dispatch`), `EventBus` (in-process emitter + SSE client for `/api/pipeline/stream` + blackboard `:8765` client), `fixtures/events.json` (replay snapshot + event stream), dev harness rendering any registered block against fixtures. TS, strict.
-- **M2 — React renderer + block ports** (web families first: map (Leaflet), route, metrics, audit/notification, weather, audio/visualizer canvas, chat, console/log, terminal, blackboard-watcher, pipeline-monitor). Parity harness replays the same fixtures against React and legacy adapters. JVM/Qt adapters remain doc-only stubs.
-- **M3 — Node canvas**: graph model + editor (pan/zoom/connect), `graph.json`, `tasks.yaml` DAG import; waveform + sketch canvases become canvas blocks.
-- **M4 — Tauri desktop shell + flagship**: WebView2/KitGTK wrapper; "Command Center" CRM shell composes blocks + canvas; React is the only UI.
-- **M5 — CRM layering**: blackboard ACL → role matrix (personal / business+analytics / enterprise+audit), namespacing, audit export; legacy PySide6 GUI retires at parity.
-- **M6 — Packaging**: Flatpak (`org.freedesktop.Sdk//24.08`, `--device=dri`, localhost+mesh network) and Android (WebView-hosted React, FOSS/Play flavors, car-app flavor-gated) for the flagship.
+- **M0 — Spec & tokens** *(done)*: `docs/block-spec.md` v0.1, consolidated `design/tokens.json`, `PLAN.md`. Emissions: CSS-vars generator; QSS/Compose generator stubs.
+- **M1 — Core** *(done, PR #2, `5f4fdc1`)*: `packages/core`: `BlockRegistry` (`register/mount/unmount/dispatch`), `EventBus` (in-process emitter + SSE client for `/api/pipeline/stream` + blackboard `:8765` client), `fixtures/events.json` (replay snapshot + event stream), dev harness rendering any registered block against fixtures. TS, strict.
+- **M2 — React renderer + block ports** *(done, PR #2)* web families: map (Leaflet), route, metrics, audit/notification, weather, audio/visualizer canvas, chat, console/log, terminal, blackboard-watcher, pipeline-monitor (+ graph in M3). Parity harness replays the same fixtures against React and legacy adapters; JVM/Qt adapters remain doc-only stubs.
+- **M3 — Node canvas** *(done, PR #3, `3ac7bd3`)*: graph model + editor (pan/zoom/connect with type+cycle validation), `graph.json` + tasks.yaml-crew-DAG import, Kahn deterministic layout; SVG canvas block + embedded crew demo.
+- **M4 — Tauri desktop shell + flagship** *(done, PR #4 `8cca883`)*: `apps/command-center` CRM shell composes all 12 blocks in 5 section workspaces (single EventBus); `infra/tauri` v2 scaffold (rust build pending toolchain install).
+- **M5 — CRM layering** *(done, PR #5)*: blackboard ACL → role matrix (personal / business / enterprise) in `packages/core/src/acl.ts`, `canRead/canWrite/maskSnapshot`, BlackboardClient write-gating; audit category enterprise-only.
+- **M6 — Packaging** *(done, PR #6)*: Flatpak (`infra/flatpak/org.scout.imagoro.json`, GNOME 46 runtime, CI workflow) + Android (`infra/webview-android/`: Tauri-v2 route + open-source WebView host, Play/F-Droid notes) + `docs/dev-process.md`.
 
 ## 4. Dev processes (per platform)
 
@@ -97,9 +97,10 @@ imagoro-ui/
 - Existing worktrees = **read-only poach sources**: `scout-can-y-a7315`, `secur-can-y-b8697`, `routi-can-y-667e5`, `voxel-can-y-70f9d`.
 - Discipline: one worktree (fresh branch) per block family; durable decisions → `kepler-workspace_add_task_note`; each PR → `kepler-workspace_attach_link`; every agent ends with a smoke artifact. Port = read + reference only; never modify the four source worktrees.
 
-## 6. Open questions (decide at M4/M5; non-blocking)
+## 6. Open questions (decided at M2/M4/M5)
 
-1. React 19 vs 18 (default: latest stable at M2).
-2. Block state: Zustand vs Redux Toolkit.
-3. Canvas: custom vs `@xyflow/react`.
-4. CRM storage: blackboard SQLite (local) → Postgres at enterprise tier.
+1. **React 19 vs 18** → **18.3.1** across renderer + shell (canonical; pin, don't float).
+2. **Block state: Zustand vs Redux Toolkit** → **neither**. Shared `EventBus` + per-block `useBlockState` (BlockContext) is sufficient at this scale; a store would duplicate the bus.
+3. **Canvas: custom vs `@xyflow/react`** → **custom** SVG renderer in `blocks/graph` (SSR-safe, token-styled, no extra dep); graph model lives UI-agnostic in `packages/canvas`.
+4. **CRM storage** → blackboard SQLite (local/personal tier) → Postgres at business/enterprise tier; ACL matrix (`personal`/`business`/`enterprise`) is enforced at the client (`BlackboardClient`) and will mirror server-side at the enterprise tier.
+5. **Stacking/PR flow** → each milestone is a branch + smoke-gated PR stacked on its predecessor; retarget to `main` as the chain merges (PRs #2–#6 currently stacked).
