@@ -7,6 +7,10 @@ license = "Apache-2.0"
 edition = "2021"
 rust-version = "1.77.2"
 
+[lib]
+name = "imagoro_command_center_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 

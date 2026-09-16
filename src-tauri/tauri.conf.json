@@ -30,6 +30,7 @@
     "category": "Productivity",
     "shortDescription": "Composable block GUI + node canvas command center",
     "longDescription": "Imagoro Command Center - React-first block GUI (12 web block families) with a node canvas, driven by a SSE event bus and the blackboard store.",
-    "copyright": "Copyright (c) 2026"
+    "copyright": "Copyright (c) 2026",
+    "icon": ["icons/icon.ico", "icons/icon.png", "icons/icon.icns"]
   }
 }
