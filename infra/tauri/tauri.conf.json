@@ -1,0 +1,35 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Imagoro Command Center",
+  "version": "0.1.0",
+  "identifier": "org.scout.imagoro",
+  "build": {
+    "beforeDevCommand": "pnpm --filter @imagoro/command-center dev",
+    "devUrl": "http://localhost:8790",
+    "beforeBuildCommand": "pnpm --filter @imagoro/command-center build",
+    "frontendDist": "../../apps/command-center/dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Imagoro Command Center",
+        "width": 1280,
+        "height": 820,
+        "minWidth": 960,
+        "minHeight": 600
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "category": "Productivity",
+    "shortDescription": "Composable block GUI + node canvas command center",
+    "longDescription": "Imagoro Command Center — React-first block GUI (12 web block families) with a node canvas, driven by a SSE event bus and the blackboard store.",
+    "copyright": "Copyright (c) 2026"
+  }
+}
