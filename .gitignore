@@ -10,6 +10,9 @@ output/
 *.sqlite
 src-tauri/target/
 src-tauri/gen/schemas/
+.flatpak-build-src/
+flatpak-build/
+export-repo/
 .vscode/
 .idea/
 .DS_Store

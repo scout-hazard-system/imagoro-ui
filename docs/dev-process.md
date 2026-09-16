@@ -57,30 +57,49 @@ pnpm tauri dev    # run from src-tauri/ (tauri.conf.json sits beside Cargo.toml 
 
 ## Flatpak (Linux)
 
-Gated track — config/scaffold only until a Linux maintainer runs it. There is
-**no Linux support on the Windows host**, by design. Full instructions:
-infra/flatpak/README.md.
+**Verified** on WSL2 (Ubuntu 22.04, user-session flatpak). Full path:
 
-```bash
-# on a Linux machine (or WSL2 with systemd):
-flatpak install -y org.gnome.Sdk//46 org.gnome.Platform//46
-# build the .flatpak bundle via flatpak-builder + the Tauri release binary
-# (GitHub Action: .github/workflows/flatpak.yml)
-```
+1. Linux toolchain inside WSL2: rustup (stable), Node 24 + pnpm 9 (via
+   `/opt/node/bin`), apt deps `libwebkit2gtk-4.1-dev librsvg2-dev patchelf file
+   build-essential libxdo-dev libssl-dev libayatana-appindicator3-dev`.
+2. Flatpak: `flatpak remote-add --user --if-not-exists flathub
+   https://dl.flathub.org/repo/flathub.flatpakrepo` then `flatpak --user
+   install -y --noninteractive org.gnome.Sdk//46 org.gnome.Platform//46`.
+3. Desktop bundle (from `src-tauri/`): `pnpm tauri build` → `.deb`, `.rpm`,
+   `.AppImage` + release binary `src-tauri/target/release/imagoro-command-center`.
+4. Flatpak wrap (from repo root):
+   ```bash
+   mkdir -p .flatpak-build-src
+   cp src-tauri/target/release/imagoro-command-center .flatpak-build-src/imagoro
+   flatpak-builder --user --force-clean --ccache flatpak-build infra/flatpak/org.scout.imagoro.json
+   flatpak build-export export-repo flatpak-build
+   flatpak build-bundle export-repo imagoro.flatpak org.scout.imagoro
+   ```
+5. The `.flatpak` bundle installed fine (`app/org.scout.imagoro/x86_64/master`)
+   and `/app/bin/imagoro` is a valid stripped x86-64 ELF.
+
+GitHub Action `.github/workflows/flatpak.yml` runs the same chain on `ubuntu-24.04`.
 
 ## Android / open-source alternatives
 
-Gated track — the Android SDK + JDK are **not** available on the issuing
-Windows host, so `infra/webview-android` is a scaffold plus docs. Two options:
+**Verified** (Windows reference host): the Tauri v2 Android route produces a
+native APK from the same web shell. Prereqs already installed on the reference
+host: JDK 17 (`C:\Users\gryph\.jdks\jdk-17.0.20.1+1` — AGP/Gradle reject the
+JDK 25 that Android Studio bundles), Android SDK with cmdline-tools + NDK
+(r27c; install via `sdkmanager "ndk;27.2.12479018"` after accepting licenses),
+rust android targets (`rustup target add aarch64-linux-android
+armv7-linux-androideabi i686-linux-android x86_64-linux-android`).
 
-1. **Tauri v2 Android** (recommended, shares the web shell): run
-   `pnpm tauri android init` then `pnpm tauri android build` on a machine with
-   Android Studio SDK + JDK 17. Emits a native APK wrapping the same renderer
-   that Flatpak/desktop use. See infra/webview-android/README.md.
-2. **Open-source WebView host** (zero-Tauri-option fallback): the scaffold's
-   `MainActivity.kt` loads `apps/command-center/dist` from assets, so any
-   WebView-capable Android app (or a F-Droid build) can run the shell with no
-   proprietary SDK. Play notes & F-Droid flavor notes are in the same README.
+From `src-tauri/` with `JAVA_HOME`/`ANDROID_HOME` set:
+`pnpm tauri android init` then `pnpm tauri android build --apk`. Verified
+artifact: `gen/android/app/build/outputs/apk/universal/release/
+app-universal-release-unsigned.apk` (25.9 MB, all four ABIs; release signing
+needs a keystore — the debug/CI path can sign with the debug keystore).
+
+The **open-source WebView host** remains as documented: the scaffold's
+`MainActivity.kt` loads `apps/command-center/dist` from assets, so any
+WebView-capable Android app (or an F-Droid build) can run the shell with no
+proprietary SDK. Play notes & F-Droid flavor notes are in infra/webview-android/README.md.
 
 ## Orchestration model (Kepler)
 

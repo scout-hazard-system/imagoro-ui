@@ -1,9 +1,13 @@
 # Imagoro on Android / open-source WebView
 
-Gated track. **Status: scaffold only** — the phase-1 Windows host has no
-Android SDK or JDK, so nothing here compiles locally; it is reviewed +
-config-verified and CI-ready for a runner that has `android-34` + JDK 17.
-Un-verified TODO markers are `[verify]`.
+**Option A verified** (Windows reference host): `pnpm tauri android build --apk`
+emits a native APK wrapping the same command-center shell (see
+`docs/dev-process.md` for the working prereqs — JDK 17, SDK cmdline-tools + NDK
+r27c, rust android targets). Generated project lives in `src-tauri/gen/android`;
+artifact at `gen/android/app/build/outputs/apk/universal/release/
+app-universal-release-unsigned.apk` (release signing needs a keystore).
+Option B below remains a documented, zero-Tauri fallback (scaffold,
+config-reviewed, not yet compiled here).
 
 Two supported ways to ship the same command-center shell on Android:
 
@@ -13,18 +17,18 @@ Wraps the identical renderer that desktop/Flatpak use; nearest to zero-fork UI.
 
 ```bash
 pnpm --filter @imagoro/command-center build          # web bundle first
-pnpm tauri android init                              # [verify: requires tauri-cli + SDK]
-pnpm tauri android build                             # -> src-tauri/gen/android/app/build/outputs/apk
+pnpm tauri android init                              # verified: generates src-tauri/gen/android
+pnpm tauri android build                             # verified: -> gen/android/app/build/outputs/apk/universal/release/
 ```
 
 - Prereqs on the build machine: Android Studio (SDK `platform;android-34`
-  `build-tools;34.0.0`, NDK auto), JDK 17, Rust android targets
+  `build-tools;34.0.0`, NDK r27c), JDK 17, Rust android targets
   (`rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android`).
 - Generated project under `src-tauri/gen/android` is the canonical way to
   reach Play. Same capabilities as on desktop (core:default + event + opener
   live in src-tauri/capabilities).
-- `[verify]` the `bundle.identifiers.org.scout.imagoro` in tauri.conf.json
-  once gen/android exists; commonly inverted naming, cheap to fix pre-build.
+- Verified `identifier` `org.scout.imagoro` is carried through to
+  `gen/android` build config; no inversion issue.
 
 ## Option B — Open-source WebView host (F-Droid friendly, zero Tauri)
 

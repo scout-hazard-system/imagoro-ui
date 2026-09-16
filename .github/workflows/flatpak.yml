@@ -47,13 +47,18 @@ jobs:
         run: |
           pnpm install --frozen-lockfile
           pnpm --filter @imagoro/command-center build
-          pnpm tauri build
+          cd src-tauri && pnpm tauri build && cd ..
+
+      - name: Stage binary for flatpak-builder
+        run: |
+          mkdir -p .flatpak-build-src
+          cp src-tauri/target/release/imagoro-command-center .flatpak-build-src/imagoro
 
       - name: Flatpak-builder bundle
         run: |
           flatpak-builder --user --force-clean --ccache flatpak-build infra/flatpak/org.scout.imagoro.json
           flatpak build-export export-repo flatpak-build
-          flatpak build-bundle /var/lib/flatpak/repo imagoro.flatpak org.scout.imagoro
+          flatpak build-bundle export-repo imagoro.flatpak org.scout.imagoro
 
       - uses: actions/upload-artifact@v4
         with:

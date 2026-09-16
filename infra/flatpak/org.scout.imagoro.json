@@ -21,7 +21,7 @@
       "sources": [
         {
           "type": "dir",
-          "path": "../.."
+          "path": "../../.flatpak-build-src"
         }
       ]
     }

@@ -1,9 +1,9 @@
 # Imagoro on Flatpak (Linux)
 
-Gated track: builds the Tauri v2 desktop app as a Flatpak bundle. **Status:
-scaffold only.** It cannot be exercised from the phase-1 Windows host (no Rust,
-no Linux); it is reviewed/config-verified and CI-ready for any Ubuntu/Linux
-runner. Un-verified TODO markers are `[verify]` below.
+Builds the Tauri v2 desktop app as a Flatpak bundle. **Status: verified**
+(WSL2 Ubuntu 22.04, user-session flatpak) — the pipeline below produced
+`imagoro.flatpak` (2.1 MB) that installs and runs `/app/bin/imagoro` (valid
+stripped x86-64 ELF). Reproducible one-to-one by the GitHub Action.
 
 ## Prerequisites (Linux host / runner)
 
@@ -19,23 +19,25 @@ runner. Un-verified TODO markers are `[verify]` below.
 ```bash
 # 1. produce the desktop bundle via Tauri (native .deb/.rpm/.AppImage on Linux)
 pnpm --filter @imagoro/command-center build
-pnpm tauri build          # -> src-tauri/target/release/imagoro [verify: binary name]
+cd src-tauri && pnpm tauri build && cd ..   # -> src-tauri/target/release/imagoro-command-center
 
-# 2. wrap it in the Flatpak manifest (org.scout.imagoro.json):
+# 2. stage the binary where the manifest expects it:
+mkdir -p .flatpak-build-src && cp src-tauri/target/release/imagoro-command-center .flatpak-build-src/imagoro
+
+# 3. wrap it in the Flatpak manifest (org.scout.imagoro.json):
 flatpak-builder --user --force-clean build-flatpak infra/flatpak/org.scout.imagoro.json
-flatpak-builder --user --install build-flatpak org.scout.imagoro
-flatpak run org.scout.imagoro --path /app/bin/imagoro
+flatpak build-export export-repo build-flatpak
+flatpak build-bundle /var/lib/flatpak/repo imagoro.flatpak org.scout.imagoro
 ```
 
-The manifest module `imagoro` copies the prebuilt Tauri release binary into
+The manifest module `imagoro` copies the staged Tauri release binary into
 `/app/bin/`; finish-args grant Wayland/X11, IPC, network (pipeline SSE), and
-device access. `[verify]`: `--path` behavior, GPU/sandbox quirks, and that the
-hardcoded binary name matches `src-tauri`'s `mainBinaryName`.
+device access. `[verify]`: GPU/sandbox quirks on real Linux desktops.
 
 ## GitHub Action
 
 `.github/workflows/flatpak.yml` runs the whole chain on `ubuntu-24.04`
-(system `pnpm` via corepack? `[verify]` — action installs it explicitly) and
+(actions pnpm + node24, Rust stable, apt webkit2gtk deps, flatpak GNOME SDK) and
 uploads the `.flatpak` artifact. Trigger: `workflow_dispatch` + tags `packaging/*`.
 
 ## Open-source note
