@@ -84,6 +84,28 @@ importers:
         specifier: ^5.6.0
         version: 5.9.3
 
+  blocks/graph:
+    dependencies:
+      '@imagoro/canvas':
+        specifier: workspace:*
+        version: link:../../packages/canvas
+      '@imagoro/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@imagoro/renderer-react':
+        specifier: workspace:*
+        version: link:../../packages/renderer-react
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+    devDependencies:
+      '@types/react':
+        specifier: ^18.3.0
+        version: 18.3.31
+      typescript:
+        specifier: ^5.6.0
+        version: 5.9.3
+
   blocks/map:
     dependencies:
       '@imagoro/core':
@@ -161,6 +183,9 @@ importers:
       '@imagoro/block-console':
         specifier: workspace:*
         version: link:../console
+      '@imagoro/block-graph':
+        specifier: workspace:*
+        version: link:../graph
       '@imagoro/block-map':
         specifier: workspace:*
         version: link:../map
@@ -283,6 +308,15 @@ importers:
       typescript:
         specifier: ^5.6.0
         version: 5.9.3
+
+  packages/canvas:
+    devDependencies:
+      typescript:
+        specifier: ^5.6.0
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9
 
   packages/core:
     devDependencies:
