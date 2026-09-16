@@ -45,6 +45,10 @@
   --spacing-xl: 22px;
   --font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'Cascadia Code', Consolas, 'Courier New', monospace;
+  --font-size-xs: 11px;
+  --font-size-sm: 12px;
+  --font-size-md: 13px;
+  --font-size-lg: 14px;
   --layout-card-gap: 14px;
   --layout-grid-min: 320px;
   --layout-canvas-default: 1160px;

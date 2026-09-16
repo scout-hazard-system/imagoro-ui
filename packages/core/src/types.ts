@@ -28,12 +28,14 @@ export interface BusEvent {
 
 export type JsonObject = Record<string, unknown>;
 
+export type Config = Record<string, unknown>;
+
 export interface BlockState {
   [key: string]: unknown;
 }
 
 export interface BlockContext {
-  readonly config: Record<string, unknown>;
+  config: Config;
   dispatch: (evt: BusEvent) => void;
   subscribe: (fn: (evt: BusEvent) => void) => () => void;
 }
