@@ -5,15 +5,13 @@
   "description": "Composable block GUI + node canvas framework, React-first, for the Scout suite",
   "license": "Apache-2.0",
   "packageManager": "pnpm@9.15.0",
-  "workspaces": [
-    "packages/*",
-    "blocks/*"
-  ],
   "scripts": {
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "dev": "pnpm --filter @imagoro/renderer-react dev",
     "gen:tokens": "node design/gen-css.mjs",
-    "smoke": "node scripts/smoke.mjs"
+    "smoke": "node scripts/smoke.mjs",
+    "smoke:m1": "node scripts/smoke-m1.mjs",
+    "smoke:m2": "node scripts/smoke-m2.mjs"
   }
 }

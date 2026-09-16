@@ -10,6 +10,7 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "declaration": true,
+    "resolveJsonModule": true,
     "verbatimModuleSyntax": true,
     "jsx": "react-jsx"
   }
