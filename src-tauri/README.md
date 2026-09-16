@@ -4,7 +4,7 @@ Wraps the `@imagoro/command-center` web build (React-first, `packages/renderer-r
 in a native desktop shell (WebView2 on Windows, webkit2gtk on Linux/Flatpak). React is the only UI —
 this crate is just the window + capabilities.
 
-`tauri.conf.json` (repo root) points at `apps/command-center/dist` (`beforeBuildCommand` builds it).
+`tauri.conf.json` (beside `Cargo.toml`) points at `../apps/command-center/dist` (`beforeBuildCommand` builds it).
 
 ## Status
 
@@ -21,7 +21,7 @@ devDependency). Linux/Flatpak and Android tracks remain gated (see `infra/flatpa
 3. **WebView2 runtime** — preinstalled on Windows 11 / recent Win10.
 4. **tauri-cli** — already a root devDependency (`@tauri-apps/cli`).
 
-## Commands (run from repo root)
+## Commands (run from src-tauri/)
 
 ```
 pnpm tauri dev      # dev URL http://localhost:8790 via beforeDevCommand (vite, strictPort :8790)
@@ -30,7 +30,7 @@ pnpm tauri build    # release bundle (msi/nsis on Windows, web/AppImage on Linux
 
 ## Notes
 
-- `tauri.conf.json` → `build.frontendDist` is `apps/command-center/dist`; `beforeDevCommand` starts the
+- `tauri.conf.json` → `build.frontendDist` is `../apps/command-center/dist`; `beforeDevCommand` starts the
   command-center vite server at `:8790` (proxy `/api` → `127.0.0.1:18080`).
 - Capabilities (`src-tauri/capabilities/default.json`) allow `core:default` + `core:event:default` +
   `opener:default` for the `main` window only.

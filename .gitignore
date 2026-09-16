@@ -8,6 +8,8 @@ output/
 *.log
 *.db
 *.sqlite
+src-tauri/target/
+src-tauri/gen/schemas/
 .vscode/
 .idea/
 .DS_Store

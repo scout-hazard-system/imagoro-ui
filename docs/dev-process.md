@@ -49,7 +49,7 @@ Tauri desktop (Windows) — additional prerequisites: **Rust toolchain** (rustup
 
 ```powershell
 pnpm --filter @imagoro/command-center build
-pnpm tauri dev    # from repo root; tauri.conf.json at root points at command-center dist
+pnpm tauri dev    # run from src-tauri/ (tauri.conf.json sits beside Cargo.toml there)
 ```
 
 > **Status**: desktop bundle builds on Windows (verified). Prereqs are installed on the reference host;
