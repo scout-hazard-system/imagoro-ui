@@ -7,7 +7,7 @@
     "beforeDevCommand": "pnpm --filter @imagoro/command-center dev",
     "devUrl": "http://localhost:8790",
     "beforeBuildCommand": "pnpm --filter @imagoro/command-center build",
-    "frontendDist": "../../apps/command-center/dist"
+    "frontendDist": "apps/command-center/dist"
   },
   "app": {
     "windows": [
@@ -29,7 +29,7 @@
     "targets": "all",
     "category": "Productivity",
     "shortDescription": "Composable block GUI + node canvas command center",
-    "longDescription": "Imagoro Command Center — React-first block GUI (12 web block families) with a node canvas, driven by a SSE event bus and the blackboard store.",
+    "longDescription": "Imagoro Command Center - React-first block GUI (12 web block families) with a node canvas, driven by a SSE event bus and the blackboard store.",
     "copyright": "Copyright (c) 2026"
   }
 }

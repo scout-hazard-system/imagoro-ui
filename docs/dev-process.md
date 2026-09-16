@@ -14,8 +14,8 @@ packages/canvas        node-canvas: immutable graph model (DAG), layout, tasks.y
 packages/renderer-react React block host: BlockSlot, useBlockState, Harness, app.css (tokens only)
 blocks/*                leaf blocks (11 web families + graph canvas) registered via registerAll
 apps/command-center    flagship CRM shell composing all blocks; entry for Tauri desktop
-infra/tauri            Tauri v2 desktop scaffold (devUrl :8790 -> command-center)
-infra/flatpak          Flatpak/Linux packaging scaffold (see infra/flatpak/README.md)
+src-tauri/           Tauri v2 desktop crate + conf (repo root; devUrl :8790 -> command-center)
+infra/flatpak        Flatpak/Linux packaging scaffold (see infra/flatpak/README.md)
 infra/webview-android  Android WebView/Tauri-gen scaffold (see infra/webview-android/README.md)
 scripts/smoke-m*.mjs   per-milestone verifiers -> output/*_OK.txt (output/ is gitignored)
 ```
@@ -49,12 +49,11 @@ Tauri desktop (Windows) — additional prerequisites: **Rust toolchain** (rustup
 
 ```powershell
 pnpm --filter @imagoro/command-center build
-pnpm tauri dev    # from repo root; infra/tauri/tauri.conf.json points at command-center dist
+pnpm tauri dev    # from repo root; tauri.conf.json at root points at command-center dist
 ```
 
-> **Status**: scaffold is config-verified only. The issuing host has no Rust
-> toolchain, so `cargo tauri build` has not been executed. Install rustup +
-> MSVC Build Tools first; see infra/tauri/README.md.
+> **Status**: desktop bundle builds on Windows (verified). Prereqs are installed on the reference host;
+> see src-tauri/README.md.
 
 ## Flatpak (Linux)
 

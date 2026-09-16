@@ -22,7 +22,7 @@ pnpm tauri android build                             # -> src-tauri/gen/android/
   (`rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android`).
 - Generated project under `src-tauri/gen/android` is the canonical way to
   reach Play. Same capabilities as on desktop (core:default + event + opener
-  live in infra/tauri/src-tauri/capabilities).
+  live in src-tauri/capabilities).
 - `[verify]` the `bundle.identifiers.org.scout.imagoro` in tauri.conf.json
   once gen/android exists; commonly inverted naming, cheap to fix pre-build.
 

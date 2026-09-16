@@ -26,7 +26,8 @@ packages/adapter-jvm/    stub — Swing/Android port docs (from PainterModel, Ma
 packages/adapter-qt/     stub — PySide6 port docs (from scout_crew gui.py)
 blocks/                  one package per block family (incl. graph canvas)
 apps/                    flagship "Command Center" shell + harnesses
-infra/                   tauri/, flatpak/, webview-android/ scaffolds
+infra/                   flatpak/ + webview-android/ scaffolds
+src-tauri/               Tauri v2 desktop crate + tauri.conf.json
 design/                  tokens.json (source of truth) + generators
 docs/                    PLAN.md, block-spec.md, dev-process.md
 ```

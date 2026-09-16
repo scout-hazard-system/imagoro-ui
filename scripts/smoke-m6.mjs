@@ -16,7 +16,7 @@ const CHECK = [
   ["android manifest", () => exists("infra/webview-android/app/src/main/AndroidManifest.xml")],
   ["android README", () => exists("infra/webview-android/README.md")],
   ["dev-process doc", () => exists("docs/dev-process.md")],
-  ["tauri config still present (desktop path)", () => exists("infra/tauri/tauri.conf.json")],
+  ["tauri config present (root tauri.conf.json)", () => exists("tauri.conf.json")],
   ["packaging status marked gated (no false 'verified')", () => {
     const dev = readFileSync(join(root, "docs/dev-process.md"), "utf8");
     return dev.includes("config-verified only") || dev.includes("Gated");
