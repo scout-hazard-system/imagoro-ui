@@ -1,0 +1,29 @@
+{
+  "app-id": "org.scout.imagoro",
+  "runtime": "org.gnome.Platform//46",
+  "sdk": "org.gnome.Sdk//46",
+  "command": "imagoro",
+  "finish-args": [
+    "--share=ipc",
+    "--share=network",
+    "--socket=wayland",
+    "--socket=x11",
+    "--socket=pulseaudio",
+    "--device=all"
+  ],
+  "modules": [
+    {
+      "name": "imagoro",
+      "buildsystem": "simple",
+      "build-commands": [
+        "install -Dm755 imagoro /app/bin/imagoro"
+      ],
+      "sources": [
+        {
+          "type": "dir",
+          "path": "../.."
+        }
+      ]
+    }
+  ]
+}
