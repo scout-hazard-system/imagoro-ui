@@ -259,3 +259,107 @@ body {
   color: var(--disabled-text);
   cursor: not-allowed;
 }
+
+.cnv-wrap .cnv {
+  position: relative;
+  overflow: hidden;
+  flex: 1;
+  min-height: 320px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  touch-action: none;
+}
+
+.cnv-wrap .cnv:active {
+  cursor: grabbing;
+}
+
+.cnv-world {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+}
+
+.cnv-wires {
+  position: absolute;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.cnv-wire {
+  fill: none;
+  stroke: var(--text-muted);
+  stroke-width: 1.5;
+  opacity: 0.7;
+}
+
+.cnv-wire-preview {
+  stroke: var(--accent);
+  stroke-dasharray: 6 4;
+}
+
+.cnv-wire-preview-ok {
+  stroke: var(--status-ok-bg);
+}
+
+.cnv-node {
+  position: absolute;
+  background: var(--bg-surface-alpha);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  box-sizing: border-box;
+  cursor: move;
+  user-select: none;
+  touch-action: none;
+  z-index: 1;
+}
+
+.cnv-node-label {
+  display: block;
+  font-size: var(--font-size-xs);
+  color: var(--text);
+  font-weight: 600;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cnv-node-kind {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cnv-port {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 1px solid var(--bg-top);
+  cursor: crosshair;
+  z-index: 2;
+}
+
+.cnv-port-in {
+  background: var(--bg-input);
+  border-color: var(--accent);
+}
+
+.cnv-port-active {
+  box-shadow: 0 0 0 3px var(--status-ok-border);
+}
+
+.cnv-hud {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}

@@ -12,6 +12,7 @@ import ConsoleBlock from "@imagoro/block-console";
 import TerminalBlock from "@imagoro/block-terminal";
 import BlackboardBlock from "@imagoro/block-blackboard";
 import PipelineBlock from "@imagoro/block-pipeline";
+import GraphBlock from "@imagoro/block-graph";
 
 const ctx: BlockContext = {
   config: {},
@@ -34,7 +35,8 @@ describe("web block render (SSR parity smoke)", () => {
     ["console", <ConsoleBlock ctx={ctx} />],
     ["terminal", <TerminalBlock ctx={ctx} />],
     ["blackboard", <BlackboardBlock ctx={ctx} />],
-    ["pipeline", <PipelineBlock ctx={ctx} />]
+    ["pipeline", <PipelineBlock ctx={ctx} />],
+    ["graph", <GraphBlock ctx={ctx} />]
   ];
 
   for (const [name, node] of cases) {

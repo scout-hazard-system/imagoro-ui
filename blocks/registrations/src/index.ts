@@ -10,6 +10,7 @@ import ConsoleBlock, { manifest as consoleManifest } from "@imagoro/block-consol
 import TerminalBlock, { manifest as terminalManifest } from "@imagoro/block-terminal";
 import BlackboardBlock, { manifest as blackboardManifest } from "@imagoro/block-blackboard";
 import PipelineBlock, { manifest as pipelineManifest } from "@imagoro/block-pipeline";
+import GraphBlock, { manifest as graphManifest } from "@imagoro/block-graph";
 
 export function registerAll(host: ReactBlockHost): void {
   host.register(mapManifest.id, { manifest: mapManifest, Component: MapBlock });
@@ -23,6 +24,7 @@ export function registerAll(host: ReactBlockHost): void {
   host.register(terminalManifest.id, { manifest: terminalManifest, Component: TerminalBlock });
   host.register(blackboardManifest.id, { manifest: blackboardManifest, Component: BlackboardBlock });
   host.register(pipelineManifest.id, { manifest: pipelineManifest, Component: PipelineBlock });
+  host.register(graphManifest.id, { manifest: graphManifest, Component: GraphBlock });
 }
 
 export const blockIds: string[] = [
@@ -36,5 +38,6 @@ export const blockIds: string[] = [
   "imagoro.console",
   "imagoro.terminal",
   "imagoro.blackboard",
-  "imagoro.pipeline"
+  "imagoro.pipeline",
+  "imagoro.graph"
 ];

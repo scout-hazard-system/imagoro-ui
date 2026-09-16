@@ -20,6 +20,7 @@
     "@imagoro/block-terminal": "workspace:*",
     "@imagoro/block-visualizer": "workspace:*",
     "@imagoro/block-weather": "workspace:*",
+    "@imagoro/block-graph": "workspace:*",
     "@imagoro/core": "workspace:*",
     "@imagoro/renderer-react": "workspace:*",
     "react": "^18.3.1",
