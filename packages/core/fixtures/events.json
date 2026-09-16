@@ -17,7 +17,11 @@
       "weather": { "conditions": "clear", "tempF": 72, "humidity": 34, "windMph": 8 },
       "position": { "lat": 33.4484, "lon": -112.074, "accuracy": 18, "heading": 214 },
       "activeAlert": { "label": "1720 W Cactus / high-speed unit", "severity": "alert", "lat": 33.596, "lon": -112.103 },
-      "blackboard": { "pipeline": { "last_brief": "M0_OK", "dev_mode": "debug" } },
+      "blackboard": {
+        "pipeline": { "last_brief": "M0_OK", "dev_mode": "debug", "rank": 0.91 },
+        "crew": { "tasks": 6, "phase": "vet", "owners_pending": 2 },
+        "audit": { "exported": 42, "signers": ["scout-ops"], "policy": "raw" }
+      },
       "recent": [
         { "type": "alert/fire", "ts": 1757949500000, "label": "priority call" },
         { "type": "transcript/update", "ts": 1757949600000, "text": "…heading north on I-17…" }
