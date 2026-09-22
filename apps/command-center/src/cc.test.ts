@@ -31,7 +31,9 @@ describe("command-center sections", () => {
       "imagoro.terminal",
       "imagoro.blackboard",
       "imagoro.pipeline",
-      "imagoro.graph"
+      "imagoro.graph",
+      "imagoro.intent",
+      "imagoro.sidebar"
     ]);
     for (const s of SECTIONS) {
       for (const slot of s.slots) expect(known.has(slot.block)).toBe(true);

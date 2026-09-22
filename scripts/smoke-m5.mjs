@@ -21,12 +21,13 @@ run(["--filter", "@imagoro/blocks-registrations", "test"], "block SSR tests");
 run(["--filter", "@imagoro/command-center", "test"], "command-center tests");
 
 const aclSrc = readFileSync(join(root, "packages", "core", "src", "acl.ts"), "utf8");
+const aclGenSrc = readFileSync(join(root, "packages", "core", "src", "acl-matrix.gen.ts"), "utf8");
 const eventbusSrc = readFileSync(join(root, "packages", "core", "src", "eventbus.ts"), "utf8");
 const blackboardSrc = readFileSync(join(root, "blocks", "blackboard", "src", "index.tsx"), "utf8");
 const fixturesSrc = readFileSync(join(root, "packages", "core", "fixtures", "events.json"), "utf8");
 
 const checks = {
-  "role matrix defined": aclSrc.includes("ACL_MATRIX") && aclSrc.includes('"enterprise"'),
+  "role matrix defined": aclGenSrc.includes("ACL_MATRIX") && aclGenSrc.includes('"enterprise"') && aclSrc.includes("acl-matrix.gen.js"),
   "read/write gates exported": aclSrc.includes("export function canRead") && aclSrc.includes("export function canWrite"),
   "maskSnapshot implemented": aclSrc.includes("export function maskSnapshot"),
   "BlackboardClient gate on write": eventbusSrc.includes("blackboard write denied"),
