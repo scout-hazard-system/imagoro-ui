@@ -1,8 +1,12 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import { imagoroImagePlugin } from "./imagoro-image-plugin";
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    imagoroImagePlugin({ imageId: "imagoro.command-center", imageVersion: "0.1.0" })
+  ],
   server: {
     port: 8790,
     strictPort: true,

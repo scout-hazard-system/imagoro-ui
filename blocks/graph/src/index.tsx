@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
-import type { BlockManifest, BusEvent, Config } from "@imagoro/core";
+import type { BusEvent, Config } from "@imagoro/core";
 import type { BlockComponentProps } from "@imagoro/renderer-react";
 import {
   type Graph,
@@ -17,16 +17,7 @@ import {
   setViewport
 } from "@imagoro/canvas";
 
-export const manifest: BlockManifest = {
-  id: "imagoro.graph",
-  name: "Node Canvas",
-  version: "0.1.0",
-  family: "graph",
-  substrates: ["react"],
-  size: { min: [480, 320], ideal: [720, 480] },
-  ports: { in: [], out: [{ name: "graph", type: "object" }] },
-  api: ["graph/set", "graph/connect"]
-};
+export { manifest } from "./manifest.js";
 
 const NODE_W = 200;
 const NODE_H = 48;

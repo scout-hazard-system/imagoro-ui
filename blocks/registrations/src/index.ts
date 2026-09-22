@@ -41,3 +41,5 @@ export const blockIds: string[] = [
   "imagoro.pipeline",
   "imagoro.graph"
 ];
+
+export { BLOCK_CATALOG, blockById } from "./catalog.js";

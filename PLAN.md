@@ -2,7 +2,7 @@
 
 **One shared React-first codebase running every in-repo front-end of the Scout suite.** Modularity at the forefront; the target product is a multilayered CRM (personal business/analytics → enterprise). Phase 1 poaches the existing UI layer (Java/Kotlin/Python/Qt/Swing/Android) behind a substrate-neutral block contract, then shifts to React as the canonical renderer.
 
-Status: **M0–M6 shipped** (web track verified end-to-end; desktop/Linux/Android tracks config-verified — host lacks Rust/MSVC and Android SDK/JDK). Repo: `scout-hazard-system/imagoro-ui`. Host OS for phase 1: Windows (this machine); Linux/Flatpak and Android/FOSS dev processes documented in `docs/dev-process.md` + `infra/flatpak/` + `infra/webview-android/` (M6).
+Status: **M0–M6 shipped** (web track verified end-to-end; desktop/Linux/Android tracks config-verified — host lacks Rust/MSVC and Android SDK/JDK). **Phase 2 active on staging tracks**: P2-C (imagoro-image assembly manifest) implemented in the `staging/p2-c-image` worktree; P2-A (consumer back-port from `imagoro/client`) staged in `staging/p2-a-consume`. Repo: `scout-hazard-system/imagoro-ui`. Host OS for phase 1: Windows (this machine); Linux/Flatpak and Android/FOSS dev processes documented in `docs/dev-process.md` + `infra/flatpak/` + `infra/webview-android/` (M6).
 
 ---
 
@@ -72,6 +72,44 @@ imagoro-ui/
 - **M4 — Tauri desktop shell + flagship** *(done, PR #4 `8cca883`)*: `apps/command-center` CRM shell composes all 12 blocks in 5 section workspaces (single EventBus); Tauri v2 scaffold in `src-tauri/` (`tauri.conf.json` beside `Cargo.toml`, desktop bundle verified on Windows).
 - **M5 — CRM layering** *(done, PR #5)*: blackboard ACL → role matrix (personal / business / enterprise) in `packages/core/src/acl.ts`, `canRead/canWrite/maskSnapshot`, BlackboardClient write-gating; audit category enterprise-only.
 - **M6 — Packaging** *(done, PR #6)*: Flatpak (`infra/flatpak/org.scout.imagoro.json`, GNOME 46 runtime, CI workflow) + Android (`infra/webview-android/`: Tauri-v2 route + open-source WebView host, Play/F-Droid notes) + `docs/dev-process.md`.
+
+## 3.5 Phase 2 — modularity hardening (staging-tracked)
+
+Phase 2 pulls the framework toward substrate-neutral assemblies and re-merges the
+consumer progress that landed in `imagoro` (`client`, `blocks/{intent,sidebar}`,
+`apps/harness-console`) while the Phase-1 stdout (PRs #2–#6) and that repo's L-series
+grew independently. Each step ships on its own staging branch and commits only on an
+explicit user `go`.
+
+- **P2-C — imagoro-image (assembly manifest)** *(implemented, `staging/p2-c-image`)*:
+  - `packages/image` (`@imagoro/image`): typed `imagoro.image/v1` manifest — `imageId`
+    / `imageVersion` / `builtAt` / `renderer` / `shell` / `blocks` (id, family, module,
+    ports, size, substrate) / `dist` (per-file sha256 + bytes) / `integrity` digest.
+    `createImageManifest()` + `verifyImageManifest()` (re-hashes dist, checks digest).
+    Node build via Vite SSR bundle (`dist/index.js`), so the package is loadable from
+    plain Node ESM (smoke scripts, emit scripts) without a TS loader.
+  - **Substrate-neutral block contract**: each of the 12 blocks splits its `manifest`
+    into a React-free `src/manifest.ts` and re-exports it from `index.tsx`; every block
+    package exposes a `./manifest` subpath import. `blocks/registrations` gains a
+    React-free `BLOCK_CATALOG` + `blockById` under `./catalog`. This is the substrate /
+    adapter seam P2-B formalizes.
+  - Emission: `apps/command-center/imagoro-image-plugin.ts` (Vite `closeBundle`) writes
+    `dist/imagoro-image.json` alongside the build; smoke `scripts/smoke-m7.mjs` →
+    `output/M7_OK.txt` (verifies sources, exports, plugin wiring, emitted manifest, and
+    a verifier round-trip re-hash of the dist files). 59 tests green, full `-r build` green.
+  - *Pending:* commit to `staging/p2-c-image` on user `go`, then PR against `main`.
+- **P2-A — consumer back-port** *(staged, `staging/p2-a-consume`, untouched)*: port
+  `client/packages/core` additions (`broker`, `gateway`, `guard`, `intent`, `sidebar`,
+  `acl-matrix.gen`) + `blocks/{intent,sidebar}` + `apps/harness-console` from
+  `imagoro` back into `imagoro-ui` behind the block contract, with a `pkg:overlay`
+  seam (`apps/command-center/src/overlay-blocks.tsx`) so the Command Center can extend
+  the canonical catalog without upstream edits.
+- **P2-B — contract audit** *(visible)*: host/API-surface audit of `packages/core`
+  against the substrate-neutral block contract; registry/EventBus/harness documentation
+  to block-spec; JVM/Qt adapter descriptors (doc-only) matching the manifest contract.
+- **P2-D…P2-H** — sequencing defined in `docs/PHASE2.md` when it lands; planned seam
+  work: token-driven generation, plugin SDK, graph-image composition (`packages/canvas`
+  → imagoro-image), multi-surface app descriptor, onboarding of remaining apps.
 
 ## 4. Dev processes (per platform)
 

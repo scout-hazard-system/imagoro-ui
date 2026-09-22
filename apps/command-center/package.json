@@ -12,6 +12,7 @@
   "dependencies": {
     "@imagoro/blocks-registrations": "workspace:*",
     "@imagoro/core": "workspace:*",
+    "@imagoro/image": "workspace:*",
     "@imagoro/renderer-react": "workspace:*",
     "leaflet": "^1.9.4",
     "react": "^18.3.1",

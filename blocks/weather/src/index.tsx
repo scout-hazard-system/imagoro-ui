@@ -1,16 +1,7 @@
-import type { BlockManifest, BusEvent } from "@imagoro/core";
+import type { BusEvent } from "@imagoro/core";
 import { useBlockState, payload, type BlockComponentProps } from "@imagoro/renderer-react";
 
-export const manifest: BlockManifest = {
-  id: "imagoro.weather",
-  name: "Weather (Current Route)",
-  version: "0.1.0",
-  family: "weather",
-  substrates: ["react"],
-  size: { min: [320, 120], ideal: [360, 180] },
-  ports: { in: [{ name: "events", type: "event[]" }], out: [] },
-  api: ["pipeline/snapshot", "pipeline/stream", "route/weather"]
-};
+export { manifest } from "./manifest.js";
 
 interface WeatherState {
   conditions: string;

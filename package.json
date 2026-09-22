@@ -18,7 +18,8 @@
     "smoke:m3": "node scripts/smoke-m3.mjs",
     "smoke:m4": "node scripts/smoke-m4.mjs",
     "smoke:m5": "node scripts/smoke-m5.mjs",
-    "smoke:m6": "node scripts/smoke-m6.mjs"
+    "smoke:m6": "node scripts/smoke-m6.mjs",
+    "smoke:m7": "node scripts/smoke-m7.mjs"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.11.4"

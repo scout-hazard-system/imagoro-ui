@@ -11,9 +11,13 @@ Workspace layout (pnpm workspaces):
 ```
 packages/core          core: EventBus, BlackboardClient, BlockRegistry, harness, ACL role matrix, fixtures
 packages/canvas        node-canvas: immutable graph model (DAG), layout, tasks.yaml importer, Kahn layers
+packages/image         imagoro-image: typed assembly manifest (schema v1), builder + verifier; Node/Vite build
 packages/renderer-react React block host: BlockSlot, useBlockState, Harness, app.css (tokens only)
 blocks/*                leaf blocks (11 web families + graph canvas) registered via registerAll
-apps/command-center    flagship CRM shell composing all blocks; entry for Tauri desktop
+                       each block also exports a React-free ./manifest subpath (substrate contract)
+blocks/registrations   React-free BLOCK_CATALOG/blockById under ./catalog + registerAll for React host
+apps/command-center    flagship CRM shell composing all blocks; entry for Tauri desktop;
+                       emits dist/imagoro-image.json at each build (imagoro-image-plugin.ts)
 src-tauri/           Tauri v2 desktop crate + conf (repo root; devUrl :8790 -> command-center)
 infra/flatpak        Flatpak/Linux packaging scaffold (see infra/flatpak/README.md)
 infra/webview-android  Android WebView/Tauri-gen scaffold (see infra/webview-android/README.md)
@@ -41,6 +45,7 @@ pnpm --filter @imagoro/command-center dev      # CRM shell (port 8790, strict)
 pnpm -r test                                   # vitest across all packages/apps/blocks
 pnpm -r build                                  # tsc + vite prod bundles (command-center dist/ drives Tauri)
 node scripts/smoke-m4.mjs                      # prints/writes M4_OK.txt, M5, M6 have their own
+pnpm smoke:m7                                  # Phase-2 imagoro-image gate (cc:build first) -> output/M7_OK.txt
 ```
 
 Tauri desktop (Windows) — additional prerequisites: **Rust toolchain** (rustup),

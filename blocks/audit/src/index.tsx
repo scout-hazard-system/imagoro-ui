@@ -1,16 +1,7 @@
-import type { BlockManifest, BusEvent } from "@imagoro/core";
+import type { BusEvent } from "@imagoro/core";
 import { useBlockState, payload, type BlockComponentProps } from "@imagoro/renderer-react";
 
-export const manifest: BlockManifest = {
-  id: "imagoro.audit",
-  name: "Notification Workflow Audit",
-  version: "0.1.0",
-  family: "audit",
-  substrates: ["react"],
-  size: { min: [320, 180], ideal: [520, 240] },
-  ports: { in: [{ name: "events", type: "event[]" }], out: [] },
-  api: ["pipeline/snapshot", "pipeline/stream"]
-};
+export { manifest } from "./manifest.js";
 
 interface AuditState {
   total: number;

@@ -1,16 +1,7 @@
-import type { BlockManifest, BusEvent } from "@imagoro/core";
+import type { BusEvent } from "@imagoro/core";
 import { useBlockState, payload, type BlockComponentProps } from "@imagoro/renderer-react";
 
-export const manifest: BlockManifest = {
-  id: "imagoro.metrics",
-  name: "Run Metrics",
-  version: "0.1.0",
-  family: "metrics",
-  substrates: ["react"],
-  size: { min: [320, 120], ideal: [480, 160] },
-  ports: { in: [{ name: "events", type: "event[]" }], out: [] },
-  api: ["pipeline/snapshot", "pipeline/stream"]
-};
+export { manifest } from "./manifest.js";
 
 interface MetricsState {
   captured: number;
