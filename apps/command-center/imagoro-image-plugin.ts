@@ -4,8 +4,12 @@ import type { Plugin } from "vite";
 import type { ImageSection, ImageBlockRef } from "@imagoro/image";
 import { createImageManifest } from "@imagoro/image";
 import { BLOCK_CATALOG } from "@imagoro/blocks-registrations/catalog";
+import { manifest as intentManifest } from "@imagoro/block-intent/manifest";
+import { manifest as sidebarManifest } from "@imagoro/block-sidebar/manifest";
 import type { BlockManifest } from "@imagoro/core";
 import { SECTIONS, type Section } from "./src/sections.js";
+
+const OVERLAY_CATALOG: BlockManifest[] = [intentManifest, sidebarManifest];
 
 const IMAGE_FILE = "imagoro-image.json";
 
@@ -52,7 +56,7 @@ export function imagoroImagePlugin(opts: { imageId: string; imageVersion: string
           entry: "src/sections.ts",
           sections: SECTIONS.map(toImageSection)
         },
-        blocks: BLOCK_CATALOG.map(toImageBlockRef),
+        blocks: [...BLOCK_CATALOG, ...OVERLAY_CATALOG].map(toImageBlockRef),
         distDir: outDir
       });
       writeFileSync(resolve(outDir, IMAGE_FILE), `${JSON.stringify(manifest, null, 2)}\n`);

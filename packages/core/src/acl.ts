@@ -1,5 +1,20 @@
-export const ROLES = ["personal", "business", "enterprise"] as const;
-export type Role = (typeof ROLES)[number];
+import {
+  ACL_MATRIX,
+  BLACKBOARD_KINDS,
+  CATEGORIES,
+  ROLES,
+  type BlackboardCategory,
+  type BlackboardKind,
+  type BlackboardKindACL,
+  type Role,
+  type RoleScope
+} from "./acl-matrix.gen.js";
+
+// L0.6: the matrix + closed enums are now single-sourced from server/acl-matrix.json
+// via scripts/gen-client-acl.mjs — acl.ts only carries derived helpers + labels.
+
+export type { BlackboardCategory, BlackboardKind, BlackboardKindACL, Role, RoleScope } from "./acl-matrix.gen.js";
+export { ACL_MATRIX, BLACKBOARD_KINDS, CATEGORIES, ROLES } from "./acl-matrix.gen.js";
 
 export const RC_ROLE = "role" as const;
 
@@ -7,76 +22,6 @@ export const ROLE_LABEL: Record<Role, string> = {
   personal: "Personal",
   business: "Business + Analytics",
   enterprise: "Enterprise + Audit"
-};
-
-export const BLACKBOARD_KINDS = ["raw", "summary", "rewrite"] as const;
-export type BlackboardKind = (typeof BLACKBOARD_KINDS)[number];
-export type BlackboardKindACL = Record<BlackboardKind, boolean>;
-
-export const CATEGORIES = ["pipeline", "crew", "mesh", "route", "analytics", "audit"] as const;
-export type BlackboardCategory = (typeof CATEGORIES)[number];
-
-export interface RoleScope {
-  read: Partial<Record<BlackboardCategory, BlackboardKindACL>>;
-  write: Partial<Record<BlackboardCategory, BlackboardKindACL>>;
-}
-
-const noneACL = (partial: BlackboardKind[] = []): BlackboardKindACL => ({
-  raw: partial.includes("raw"),
-  summary: partial.includes("summary"),
-  rewrite: partial.includes("rewrite")
-});
-
-function scope(
-  read: Partial<Record<BlackboardCategory, BlackboardKind[]>>,
-  write: Partial<Record<BlackboardCategory, BlackboardKind[]>>
-): RoleScope {
-  const to = (src: Partial<Record<BlackboardCategory, BlackboardKind[]>>) =>
-    Object.fromEntries(
-      CATEGORIES.map((c) => [c, src[c] ? noneACL(src[c]) : noneACL()])
-    ) as Partial<Record<BlackboardCategory, BlackboardKindACL>>;
-  return { read: to(read), write: to(write) };
-}
-
-/**
- * CRM role matrix. Hierarchy: enterprise ⊇ business ⊇ personal.
- * - personal  : read raw/summary on pipeline+crew+mesh+route; write raw/summary into crew+route.
- * - business  : personal {analytics} + pipeline/mesh writes + crew rewrite; NO audit access.
- * - enterprise: everything, including audit read/write (audit export) and cross-rewrite.
- */
-export const ACL_MATRIX: Record<Role, RoleScope> = {
-  personal: scope(
-    { pipeline: ["raw", "summary"], crew: ["summary"], mesh: ["summary"], route: ["summary"] },
-    { crew: ["raw", "summary"], route: ["raw"] }
-  ),
-  business: scope(
-    {
-      pipeline: ["raw", "summary", "rewrite"],
-      crew: ["summary", "rewrite"],
-      mesh: ["summary", "rewrite"],
-      route: ["raw", "summary"],
-      analytics: ["raw", "summary"]
-    },
-    { pipeline: ["raw", "summary"], crew: ["raw", "summary", "rewrite"], mesh: ["raw"], route: ["raw"], analytics: ["raw", "summary"] }
-  ),
-  enterprise: scope(
-    {
-      pipeline: ["raw", "summary", "rewrite"],
-      crew: ["raw", "summary", "rewrite"],
-      mesh: ["raw", "summary", "rewrite"],
-      route: ["raw", "summary", "rewrite"],
-      analytics: ["raw", "summary", "rewrite"],
-      audit: ["raw", "summary", "rewrite"]
-    },
-    {
-      pipeline: ["raw", "summary", "rewrite"],
-      crew: ["raw", "summary", "rewrite"],
-      mesh: ["raw", "summary", "rewrite"],
-      route: ["raw", "summary", "rewrite"],
-      analytics: ["raw", "summary", "rewrite"],
-      audit: ["raw", "summary", "rewrite"]
-    }
-  )
 };
 
 export const DEFAULT_ROLE: Role = "business";

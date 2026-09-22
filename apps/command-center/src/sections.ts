@@ -78,5 +78,15 @@ export const SECTIONS: Section[] = [
       { block: "imagoro.console" },
       { block: "imagoro.terminal" }
     ]
+  },
+  {
+    id: "intent",
+    label: "What can I do?",
+    blurb: "Route a goal to a crew role, block or tool — plan preview only, nothing executes.",
+    slots: [
+      { block: "imagoro.intent", span: "full", config: { role: "enterprise" }, label: "Intent bar" },
+      { block: "imagoro.sidebar", span: "pair", config: { role: "enterprise" }, label: "Registry sidebar" },
+      { block: "imagoro.console", span: "pair" }
+    ]
   }
 ];
