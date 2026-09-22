@@ -1,20 +1,8 @@
 import { canRead, maskSnapshot, normalizeRole, ROLE_LABEL, type Role } from "@imagoro/core";
-import type { BlockManifest, BusEvent } from "@imagoro/core";
+import type { BusEvent } from "@imagoro/core";
 import { useBlockState, payload, type BlockComponentProps } from "@imagoro/renderer-react";
 
-export const manifest: BlockManifest = {
-  id: "imagoro.blackboard",
-  name: "Blackboard",
-  version: "0.1.0",
-  family: "blackboard",
-  substrates: ["react"],
-  size: { min: [320, 160], ideal: [480, 240] },
-  ports: {
-    in: [{ name: "snapshot", type: "blackboard/snapshot" }],
-    out: [{ name: "values", type: "kv" }]
-  },
-  api: ["blackboard:pipeline", "pipeline/snapshot", "acl/role"]
-};
+export { manifest } from "./manifest.js";
 
 interface BlackboardState {
   category: string;

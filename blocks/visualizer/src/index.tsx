@@ -1,17 +1,8 @@
 import { useEffect, useRef } from "react";
-import type { BlockManifest, BusEvent } from "@imagoro/core";
+import type { BusEvent } from "@imagoro/core";
 import { useBlockState, payload, type BlockComponentProps } from "@imagoro/renderer-react";
 
-export const manifest: BlockManifest = {
-  id: "imagoro.visualizer",
-  name: "Audio Visualizer",
-  version: "0.1.0",
-  family: "audio/visualizer",
-  substrates: ["react"],
-  size: { min: [320, 120], ideal: [560, 160] },
-  ports: { in: [{ name: "rms", type: "number[]" }], out: [] },
-  api: ["pipeline/stream"]
-};
+export { manifest } from "./manifest.js";
 
 interface VizState {
   rms: number[];

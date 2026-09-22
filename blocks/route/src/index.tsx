@@ -1,19 +1,7 @@
-import type { BlockManifest, BusEvent } from "@imagoro/core";
+import type { BusEvent } from "@imagoro/core";
 import { useBlockState, payload, type BlockComponentProps } from "@imagoro/renderer-react";
 
-export const manifest: BlockManifest = {
-  id: "imagoro.route",
-  name: "Route Planner",
-  version: "0.1.0",
-  family: "route",
-  substrates: ["react"],
-  size: { min: [320, 240], ideal: [520, 360] },
-  ports: {
-    in: [{ name: "gps", type: "coordinate" }],
-    out: [{ name: "route", type: "route" }]
-  },
-  api: ["pipeline/stream"]
-};
+export { manifest } from "./manifest.js";
 
 interface RouteState {
   start: string;

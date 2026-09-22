@@ -1,16 +1,7 @@
-import type { BlockManifest, BusEvent } from "@imagoro/core";
+import type { BusEvent } from "@imagoro/core";
 import { useBlockState, payload, type BlockComponentProps } from "@imagoro/renderer-react";
 
-export const manifest: BlockManifest = {
-  id: "imagoro.chat",
-  name: "Chat",
-  version: "0.1.0",
-  family: "chat",
-  substrates: ["react"],
-  size: { min: [320, 240], ideal: [520, 360] },
-  ports: { in: [{ name: "messages", type: "chat/message[]" }], out: [] },
-  api: ["pipeline/stream"]
-};
+export { manifest } from "./manifest.js";
 
 interface ChatMessage {
   role: string;

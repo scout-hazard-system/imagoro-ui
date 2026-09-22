@@ -1,19 +1,10 @@
 import { useEffect, useRef } from "react";
-import type { BlockManifest, BusEvent } from "@imagoro/core";
+import type { BusEvent } from "@imagoro/core";
 import type { BlockComponentProps } from "@imagoro/renderer-react";
 import { payload } from "@imagoro/renderer-react";
 import L from "leaflet";
 
-export const manifest: BlockManifest = {
-  id: "imagoro.map",
-  name: "Integrated Map",
-  version: "0.1.0",
-  family: "map",
-  substrates: ["react"],
-  size: { min: [320, 240], ideal: [520, 320] },
-  ports: { in: [{ name: "events", type: "event[]" }], out: [] },
-  api: ["pipeline/stream", "map/scene"]
-};
+export { manifest } from "./manifest.js";
 
 export default function MapBlock({ ctx }: BlockComponentProps) {
   const ref = useRef<HTMLDivElement | null>(null);
