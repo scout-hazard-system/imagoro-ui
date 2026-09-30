@@ -1,7 +1,7 @@
 export type BlockFamily =
   | "map" | "route" | "chat" | "console" | "terminal" | "metrics"
   | "audit" | "weather" | "audio/visualizer" | "pipeline" | "blackboard"
-  | "cluster" | "graph";
+  | "cluster" | "graph" | "sidebar";
 
 export interface PortDef { name: string; type: string; }
 

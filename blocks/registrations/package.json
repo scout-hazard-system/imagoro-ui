@@ -6,7 +6,8 @@
   "main": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./catalog": "./src/catalog.ts"
+    "./catalog": "./src/catalog.ts",
+    "./overlay": "./src/overlay.ts"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json --noEmit",
@@ -25,6 +26,8 @@
     "@imagoro/block-visualizer": "workspace:*",
     "@imagoro/block-weather": "workspace:*",
     "@imagoro/block-graph": "workspace:*",
+    "@imagoro/block-intent": "workspace:*",
+    "@imagoro/block-sidebar": "workspace:*",
     "@imagoro/core": "workspace:*",
     "@imagoro/renderer-react": "workspace:*",
     "react": "^18.3.1",

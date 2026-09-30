@@ -1,20 +1,18 @@
 {
-  "name": "@imagoro/command-center",
+  "name": "@imagoro/harness-console",
   "version": "0.1.0",
   "license": "Apache-2.0",
   "private": true,
   "type": "module",
+  "description": "Harness Console — MCP-driven agentic harness control plane (block GUI on imagoro core)",
   "scripts": {
     "dev": "vite",
     "build": "tsc -p tsconfig.json --noEmit && vite build",
     "test": "vitest run"
   },
   "dependencies": {
-    "@imagoro/block-intent": "workspace:*",
-    "@imagoro/block-sidebar": "workspace:*",
     "@imagoro/blocks-registrations": "workspace:*",
     "@imagoro/core": "workspace:*",
-    "@imagoro/image": "workspace:*",
     "@imagoro/renderer-react": "workspace:*",
     "leaflet": "^1.9.4",
     "react": "^18.3.1",

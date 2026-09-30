@@ -43,3 +43,4 @@ export const blockIds: string[] = [
 ];
 
 export { BLOCK_CATALOG, blockById } from "./catalog.js";
+export { registerOverlay, OVERLAY_CATALOG, OVERLAY_BLOCK_IDS } from "./overlay.js";

@@ -5,6 +5,7 @@ import { EventBus, connectSse, replayFixtures } from "@imagoro/core";
 import fixtures from "@imagoro/core/fixtures";
 import { ReactBlockHost, makeCtx } from "@imagoro/renderer-react";
 import { registerAll } from "@imagoro/blocks-registrations";
+import { registerCommandCenterOverlay } from "./overlay-blocks.js";
 import "@imagoro/renderer-react/app.css";
 import "leaflet/dist/leaflet.css";
 import "../../../design/gen.css";
@@ -14,6 +15,7 @@ import "./shell.css";
 const bus = new EventBus();
 const host = new ReactBlockHost();
 registerAll(host);
+registerCommandCenterOverlay(host);
 
 function Slot({ spec }: { spec: SlotSpec }) {
   const entry = host.entry(spec.block);
