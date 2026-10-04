@@ -7,6 +7,19 @@ export interface ViewportSnapshotData {
   health?: number;
   paused?: boolean;
   cam?: { x: number; y: number; z: number; yaw?: number; pitch?: number };
+  player?: { x: number; y: number; z: number };
+  thirdPerson?: boolean;
+  legYaw?: number;
+  deltaYaw?: number;
+  stance?: number;
+  gait?: number;
+  sliding?: boolean;
+  dashing?: boolean;
+  wallRunning?: boolean;
+  stamina?: number;
+  timeOfDay?: number;
+  vertices?: number;
+  caliber?: number;
   map?: { path: string; prefabs: number };
   pick?: {
     hit: boolean;
@@ -42,6 +55,7 @@ export function postEngineAction(action: Record<string, unknown>, dispatch?: (ev
 
 interface EngineState {
   snap: ViewportSnapshotData;
+  logs: string[];
 }
 
 const initialEngineState: EngineState = {
@@ -50,94 +64,98 @@ const initialEngineState: EngineState = {
     health: 100,
     paused: false,
     cam: { x: 0, y: 0, z: 0, yaw: 0, pitch: 0 },
+    player: { x: 0, y: 0, z: 0 },
+    thirdPerson: false,
+    legYaw: 0,
+    deltaYaw: 0,
+    stance: 0,
+    gait: 0,
+    sliding: false,
+    dashing: false,
+    wallRunning: false,
+    stamina: 100,
+    timeOfDay: 0.25,
+    vertices: 0,
+    caliber: 0,
     map: { path: "data/maps/warehouse_v2.map.vox.json", prefabs: 0 },
     pick: { hit: false },
     visualParams: {}
-  }
+  },
+  logs: [
+    "[system] Native Vulkan Voxel Engine IPC online",
+    "[system] Viewport connected to WebView2 bridge",
+    "[system] Authoritative simulation running at 120 Hz tick rate"
+  ]
 };
 
 function onEngineSnapshot(state: EngineState, evt: BusEvent): EngineState {
   if (evt.type === "VIEW_SNAPSHOT" || evt.type === "engine/snapshot") {
     const data = (payload(evt) as unknown as ViewportSnapshotData) ?? {};
     return {
+      ...state,
       snap: {
         ...state.snap,
         ...data,
         cam: data.cam ? { ...data.cam } : state.snap.cam,
+        player: data.player ? { ...data.player } : state.snap.player,
         map: data.map ? { ...data.map } : state.snap.map,
         pick: data.pick ? { ...data.pick } : state.snap.pick,
         visualParams: data.visualParams ? { ...state.snap.visualParams, ...data.visualParams } : state.snap.visualParams
       }
     };
   }
+  if (evt.type === "console/log" || evt.type === "engine/log") {
+    const p = payload(evt) as { line?: string } | undefined;
+    if (p?.line) {
+      const timeStr = new Date(evt.ts || Date.now()).toLocaleTimeString();
+      return {
+        ...state,
+        logs: [`[${timeStr}] ${p.line}`, ...state.logs.slice(0, 49)]
+      };
+    }
+  }
   return state;
 }
 
-export function EngineStatusBlock({ ctx }: BlockComponentProps) {
+// -----------------------------------------------------------------------------
+// 1. Map Editor Blocks
+// -----------------------------------------------------------------------------
+
+export function MapInspectorBlock({ ctx }: BlockComponentProps) {
   const state = useBlockState(ctx, initialEngineState, onEngineSnapshot);
-  const snap = state.snap;
-  const isPaused = Boolean(snap.paused);
+  const pick = state.snap.pick;
+  const hasHit = Boolean(pick?.hit);
 
   return (
     <div className="block">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span style={{ fontSize: "var(--font-size-md)", fontWeight: 600 }}>Simulation Viewport</span>
-        <span className={`pill ${isPaused ? "warn" : "ok"}`}>
-          {isPaused ? "PAUSED (Sim Idle)" : "RUNNING (60 Hz)"}
+        <span style={{ fontSize: "var(--font-size-md)", fontWeight: 600 }}>Crosshair Voxel Raycast</span>
+        <span className={`pill ${hasHit ? "ok" : "mute"}`}>
+          {hasHit ? `Hit: ${pick?.blockName} (#${pick?.block})` : "No Surface In Reach"}
         </span>
       </div>
 
-      <div className="metrics-row" style={{ marginTop: "8px" }}>
-        <div className="metric">
-          <div className="muted" style={{ fontSize: "var(--font-size-xs)" }}>TICK</div>
-          <div style={{ fontSize: "16px", fontWeight: 700, fontFamily: "var(--font-mono)" }}>{snap.tick ?? 0}</div>
-        </div>
-        <div className="metric">
-          <div className="muted" style={{ fontSize: "var(--font-size-xs)" }}>HEALTH</div>
-          <div style={{ fontSize: "16px", fontWeight: 700, fontFamily: "var(--font-mono)", color: (snap.health ?? 100) < 50 ? "#ef4444" : "#22c55e" }}>
-            {snap.health !== undefined ? snap.health.toFixed(1) : "--"}
+      {hasHit && pick ? (
+        <div style={{ background: "var(--bg-raised)", borderRadius: "var(--radius-sm)", padding: "10px", marginTop: "8px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", fontSize: "var(--font-size-sm)" }}>
+            <div><strong>Voxel Cell:</strong> <span className="mono">({pick.x}, {pick.y}, {pick.z})</span></div>
+            <div><strong>Face Normal:</strong> <span className="mono">[{pick.nx}, {pick.ny}, {pick.nz}]</span></div>
+            <div><strong>Adjacent Cell:</strong> <span className="mono">({pick.adj?.join(", ")})</span></div>
+            <div><strong>Ray Distance:</strong> <span className="mono">{pick.dist?.toFixed(2)}m</span></div>
+            <div><strong>Material ID:</strong> <span className="mono">{pick.block} ({pick.blockName})</span></div>
+            <div><strong>Appearance Palette:</strong> <span className="mono">#{pick.paletteIndex ?? 0}</span></div>
           </div>
         </div>
-        <div className="metric">
-          <div className="muted" style={{ fontSize: "var(--font-size-xs)" }}>CAM (X, Y, Z)</div>
-          <div style={{ fontSize: "13px", fontWeight: 600, fontFamily: "var(--font-mono)" }}>
-            {snap.cam ? `${snap.cam.x.toFixed(1)}, ${snap.cam.y.toFixed(1)}, ${snap.cam.z.toFixed(1)}` : "--"}
-          </div>
+      ) : (
+        <div style={{ padding: "16px", background: "var(--bg-raised)", borderRadius: "var(--radius-sm)", marginTop: "8px", color: "var(--text-muted)", fontSize: "var(--font-size-sm)" }}>
+          Aim viewport crosshair at any terrain or structure block to inspect geometry, layer indices, and placement bounds.
         </div>
-        <div className="metric">
-          <div className="muted" style={{ fontSize: "var(--font-size-xs)" }}>AIM (YAW, PITCH)</div>
-          <div style={{ fontSize: "13px", fontWeight: 600, fontFamily: "var(--font-mono)" }}>
-            {snap.cam ? `${(snap.cam.yaw ?? 0).toFixed(2)}, ${(snap.cam.pitch ?? 0).toFixed(2)}` : "--"}
-          </div>
-        </div>
-      </div>
-
-      <div style={{ display: "flex", gap: "8px", marginTop: "12px", flexWrap: "wrap" }}>
-        <button
-          className="cc-nav"
-          style={{ background: isPaused ? "var(--accent)" : "var(--bg-raised)", color: isPaused ? "#fff" : "var(--text)" }}
-          onClick={() => postEngineAction({ type: "TOGGLE_PAUSE" }, ctx.dispatch)}
-        >
-          {isPaused ? "▶ Resume Simulation" : "⏸ Pause Simulation"}
-        </button>
-        <button
-          className="cc-nav"
-          onClick={() => postEngineAction({ type: "RESET_CAMERA" }, ctx.dispatch)}
-        >
-          🎯 Reset Camera
-        </button>
-        <button
-          className="cc-nav"
-          onClick={() => postEngineAction({ type: "SPAWN_PLAYER" }, ctx.dispatch)}
-        >
-          🔄 Respawn Player
-        </button>
-      </div>
+      )}
     </div>
   );
 }
 
-const PALETTE_BLOCKS = [
+export const PALETTE_BLOCKS = [
   { id: 2, name: "Concrete", color: "#94a3b8" },
   { id: 4, name: "Girder", color: "#f59e0b" },
   { id: 3, name: "SheetMetal", color: "#64748b" },
@@ -151,43 +169,21 @@ const PALETTE_BLOCKS = [
   { id: 10, name: "LightBulb", color: "#fbbf24" }
 ];
 
-export function VoxelInspectorBlock({ ctx }: BlockComponentProps) {
+export function MapToolsBlock({ ctx }: BlockComponentProps) {
   const state = useBlockState(ctx, initialEngineState, onEngineSnapshot);
   const pick = state.snap.pick;
-  const [selectedBlock, setSelectedBlock] = useState<number>(2); // Concrete default
+  const [selectedBlock, setSelectedBlock] = useState<number>(2);
   const [paletteIndex, setPaletteIndex] = useState<number>(0);
-
   const hasHit = Boolean(pick?.hit);
 
   return (
     <div className="block">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span style={{ fontSize: "var(--font-size-md)", fontWeight: 600 }}>Crosshair Raycast Target</span>
-        <span className={`pill ${hasHit ? "ok" : "mute"}`}>
-          {hasHit ? `Hit: ${pick?.blockName} (#${pick?.block})` : "No Surface"}
-        </span>
+        <span style={{ fontSize: "var(--font-size-md)", fontWeight: 600 }}>Material Palette & Sculpt</span>
+        <span className="pill mute">Authoritative Sim Grid</span>
       </div>
 
-      {hasHit && pick ? (
-        <div style={{ background: "var(--bg-raised)", borderRadius: "var(--radius-sm)", padding: "10px", marginTop: "8px" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px", fontSize: "var(--font-size-sm)" }}>
-            <div><strong>Cell:</strong> <span className="mono">({pick.x}, {pick.y}, {pick.z})</span></div>
-            <div><strong>Normal:</strong> <span className="mono">[{pick.nx}, {pick.ny}, {pick.nz}]</span></div>
-            <div><strong>Adjacent:</strong> <span className="mono">({pick.adj?.join(", ")})</span></div>
-            <div><strong>Distance:</strong> <span className="mono">{pick.dist?.toFixed(2)}m</span></div>
-            <div><strong>Appearance Idx:</strong> <span className="mono">{pick.paletteIndex ?? 0}</span></div>
-          </div>
-        </div>
-      ) : (
-        <div style={{ padding: "12px", background: "var(--bg-raised)", borderRadius: "var(--radius-sm)", marginTop: "8px", color: "var(--text-muted)", fontSize: "var(--font-size-sm)" }}>
-          Aim viewport crosshair at any world voxel to inspect cell coordinates and material layers.
-        </div>
-      )}
-
-      <div style={{ marginTop: "12px" }}>
-        <div style={{ fontSize: "var(--font-size-xs)", color: "var(--text-muted)", textTransform: "uppercase", marginBottom: "6px" }}>
-          Material Palette & Paint Layer
-        </div>
+      <div style={{ marginTop: "10px" }}>
         <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
           {PALETTE_BLOCKS.map((b) => (
             <button
@@ -211,8 +207,8 @@ export function VoxelInspectorBlock({ ctx }: BlockComponentProps) {
           ))}
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "8px" }}>
-          <span style={{ fontSize: "var(--font-size-xs)", color: "var(--text-muted)" }}>Palette Index (0-15):</span>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "10px" }}>
+          <span style={{ fontSize: "var(--font-size-xs)", color: "var(--text-muted)" }}>Appearance Palette (0-15):</span>
           <input
             type="number"
             min={0}
@@ -280,12 +276,295 @@ export function VoxelInspectorBlock({ ctx }: BlockComponentProps) {
           }}
           style={{ opacity: hasHit ? 1 : 0.5, color: "#f87171" }}
         >
-          🗑️ Clear Voxel
+          🗑️ Carve / Clear
         </button>
       </div>
     </div>
   );
 }
+
+export function MapSyncBlock({ ctx }: BlockComponentProps) {
+  const state = useBlockState(ctx, initialEngineState, onEngineSnapshot);
+  const map = state.snap.map;
+
+  return (
+    <div className="block">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span style={{ fontSize: "var(--font-size-md)", fontWeight: 600 }}>Map Sync & Java Painter</span>
+        <span className="pill ok">voxfmt v2</span>
+      </div>
+
+      <div style={{ background: "var(--bg-raised)", borderRadius: "var(--radius-sm)", padding: "10px", marginTop: "8px", fontSize: "var(--font-size-sm)" }}>
+        <div><strong>Active File:</strong> <span className="mono">{map?.path || "data/maps/warehouse_v2.map.vox.json"}</span></div>
+        <div style={{ marginTop: "4px" }}><strong>Prefabs Stamped:</strong> <span className="mono">{map?.prefabs ?? 0}</span></div>
+        <div style={{ marginTop: "4px", color: "var(--status-ok-text)" }}>
+          ● Live Disk Watcher: Active (external edits reload automatically)
+        </div>
+      </div>
+
+      <div style={{ display: "flex", gap: "8px", marginTop: "12px", flexWrap: "wrap" }}>
+        <button
+          className="cc-nav"
+          onClick={() => postEngineAction({ type: "RELOAD_MAP" }, ctx.dispatch)}
+        >
+          🔄 Reload Map from Disk
+        </button>
+        <button
+          className="cc-nav"
+          onClick={() => postEngineAction({ type: "LAUNCH_JAVA_PAINTER" }, ctx.dispatch)}
+        >
+          🎨 Open Java Painter Tool
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export function WorldTerrainBlock({ ctx }: BlockComponentProps) {
+  return (
+    <div className="block">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span style={{ fontSize: "var(--font-size-md)", fontWeight: 600 }}>World Dimensions & Terrain</span>
+        <span className="pill ok">1 mm Unit Voxel</span>
+      </div>
+
+      <div style={{ background: "var(--bg-raised)", borderRadius: "var(--radius-sm)", padding: "10px", marginTop: "8px", fontSize: "var(--font-size-sm)" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
+          <div><strong>World Extents:</strong> <span className="mono">192 × 64 × 160 mm</span></div>
+          <div><strong>Chunk Hierarchy:</strong> <span className="mono">12 × 4 × 10 Chunks</span></div>
+          <div><strong>Chunk Volume:</strong> <span className="mono">16³ = 4,096 voxels</span></div>
+          <div><strong>Road Unit:</strong> <span className="mono">2×2 Chunks (32×32)</span></div>
+          <div><strong>Altitude Contract:</strong> <span className="mono">Road Layer H=2</span></div>
+          <div><strong>Terrain Noise:</strong> <span className="mono">Deterministic Integer</span></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// -----------------------------------------------------------------------------
+// 2. Model & Character Editor Blocks
+// -----------------------------------------------------------------------------
+
+export function CameraPerspectiveBlock({ ctx }: BlockComponentProps) {
+  const state = useBlockState(ctx, initialEngineState, onEngineSnapshot);
+  const snap = state.snap;
+  const is3rd = Boolean(snap.thirdPerson);
+  const deltaYawDeg = snap.deltaYaw !== undefined ? ((snap.deltaYaw * 180) / Math.PI).toFixed(1) : "0.0";
+  const legYawDeg = snap.legYaw !== undefined ? ((snap.legYaw * 180) / Math.PI).toFixed(1) : "0.0";
+
+  return (
+    <div className="block">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span style={{ fontSize: "var(--font-size-md)", fontWeight: 600 }}>Camera & Perspective Tracking</span>
+        <span className={`pill ${is3rd ? "ok" : "warn"}`}>
+          {is3rd ? "3rd Person (Over-Shoulder)" : "1st Person (Head-Locked)"}
+        </span>
+      </div>
+
+      <div style={{ background: "var(--bg-raised)", borderRadius: "var(--radius-sm)", padding: "10px", marginTop: "8px", fontSize: "var(--font-size-sm)" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
+          <div><strong>Camera Eye:</strong> <span className="mono">{snap.cam ? `${snap.cam.x.toFixed(3)}, ${snap.cam.y.toFixed(3)}, ${snap.cam.z.toFixed(3)}` : "--"}</span></div>
+          <div><strong>Player Body:</strong> <span className="mono">{snap.player ? `${snap.player.x.toFixed(3)}, ${snap.player.y.toFixed(3)}, ${snap.player.z.toFixed(3)}` : "--"}</span></div>
+          <div><strong>Leg Heading:</strong> <span className="mono">{legYawDeg}°</span></div>
+          <div><strong>Waist Twist:</strong> <span className="mono">{deltaYawDeg}°</span></div>
+          <div><strong>Head Attachment:</strong> <span className="mono" style={{ color: "var(--status-ok-text)" }}>Locked to Bone #5</span></div>
+          <div><strong>Obstacle Pullback:</strong> <span className="mono">Raycast Clamped</span></div>
+        </div>
+      </div>
+
+      <div style={{ display: "flex", gap: "8px", marginTop: "12px", flexWrap: "wrap" }}>
+        <button
+          className="cc-nav"
+          style={{ background: is3rd ? "var(--accent)" : "var(--bg-raised)", color: is3rd ? "#fff" : "var(--text)" }}
+          onClick={() => postEngineAction({ type: "TOGGLE_THIRD_PERSON" }, ctx.dispatch)}
+        >
+          📷 Toggle Perspective (T / F5)
+        </button>
+        <button
+          className="cc-nav"
+          onClick={() => postEngineAction({ type: "RESET_CAMERA" }, ctx.dispatch)}
+        >
+          🎯 Reset Aim & Camera
+        </button>
+        <button
+          className="cc-nav"
+          onClick={() => postEngineAction({ type: "SPAWN_PLAYER" }, ctx.dispatch)}
+        >
+          🔄 Respawn Player
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export function LocomotionBlock({ ctx }: BlockComponentProps) {
+  const state = useBlockState(ctx, initialEngineState, onEngineSnapshot);
+  const snap = state.snap;
+
+  const currentStance = snap.stance ?? 0;
+  const currentGait = snap.gait ?? 0;
+
+  return (
+    <div className="block">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span style={{ fontSize: "var(--font-size-md)", fontWeight: 600 }}>Locomotion & Stance Testing</span>
+        <span className="pill ok">Procedural Kinematics</span>
+      </div>
+
+      <div style={{ marginTop: "10px" }}>
+        <div style={{ fontSize: "var(--font-size-xs)", color: "var(--text-muted)", marginBottom: "4px" }}>STANCE STATE</div>
+        <div style={{ display: "flex", gap: "6px" }}>
+          {[
+            { id: 0, label: "🧍 Standing (1.76m)" },
+            { id: 1, label: "🧎 Crouch (1.10m)" },
+            { id: 2, label: "🛌 Prone (0.60m)" }
+          ].map((s) => (
+            <button
+              key={s.id}
+              className="cc-nav"
+              style={{
+                background: currentStance === s.id ? "var(--accent)" : "var(--bg-raised)",
+                color: currentStance === s.id ? "#fff" : "var(--text)"
+              }}
+              onClick={() => postEngineAction({ type: "SET_STANCE", stance: s.id }, ctx.dispatch)}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ marginTop: "10px" }}>
+        <div style={{ fontSize: "var(--font-size-xs)", color: "var(--text-muted)", marginBottom: "4px" }}>GAIT CYCLE</div>
+        <div style={{ display: "flex", gap: "6px" }}>
+          {[
+            { id: 0, label: "🚶 Walk (1.0s)" },
+            { id: 1, label: "🏃 Run (0.7s)" },
+            { id: 2, label: "⚡ Sprint (0.5s)" }
+          ].map((g) => (
+            <button
+              key={g.id}
+              className="cc-nav"
+              style={{
+                background: currentGait === g.id ? "var(--accent)" : "var(--bg-raised)",
+                color: currentGait === g.id ? "#fff" : "var(--text)"
+              }}
+              onClick={() => postEngineAction({ type: "SET_GAIT", gait: g.id }, ctx.dispatch)}
+            >
+              {g.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ display: "flex", gap: "8px", marginTop: "12px", alignItems: "center" }}>
+        <button
+          className="cc-nav"
+          onClick={() => postEngineAction({ type: "TRIGGER_DASH" }, ctx.dispatch)}
+        >
+          💨 Trigger Dash (C)
+        </button>
+        <button
+          className="cc-nav"
+          onClick={() => postEngineAction({ type: "TRIGGER_SLIDE" }, ctx.dispatch)}
+        >
+          🏂 Trigger Slide
+        </button>
+        <div style={{ flex: 1, marginLeft: "8px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "var(--font-size-xs)" }}>
+            <span>Stamina</span>
+            <span className="mono">{(snap.stamina ?? 100).toFixed(0)}%</span>
+          </div>
+          <div style={{ height: "6px", background: "var(--bg-raised)", borderRadius: "3px", overflow: "hidden", marginTop: "2px" }}>
+            <div style={{ height: "100%", width: `${Math.max(0, Math.min(100, snap.stamina ?? 100))}%`, background: "#22c55e" }} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function CharacterRigBlock({ ctx }: BlockComponentProps) {
+  const state = useBlockState(ctx, initialEngineState, onEngineSnapshot);
+  const snap = state.snap;
+
+  return (
+    <div className="block">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span style={{ fontSize: "var(--font-size-md)", fontWeight: 600 }}>Skeletal Rig & Bone Palette</span>
+        <span className="pill ok">32 Bones (20 Active)</span>
+      </div>
+
+      <div style={{ background: "var(--bg-raised)", borderRadius: "var(--radius-sm)", padding: "10px", marginTop: "8px", fontSize: "var(--font-size-sm)" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
+          <div><strong>Core Spine:</strong> <span className="mono">Root → Pelvis → Spine → Chest</span></div>
+          <div><strong>Head Chain:</strong> <span className="mono">Neck (4) → Head (5)</span></div>
+          <div><strong>Left Arm:</strong> <span className="mono">LShoulder (6) → LHand (9)</span></div>
+          <div><strong>Right Arm:</strong> <span className="mono">RShoulder (10) → RHand (13)</span></div>
+          <div><strong>Left Leg:</strong> <span className="mono">LThigh (14) → LFoot (16)</span></div>
+          <div><strong>Right Leg:</strong> <span className="mono">RThigh (17) → RFoot (19)</span></div>
+        </div>
+        <div style={{ marginTop: "6px", fontSize: "var(--font-size-xs)", color: "var(--text-muted)" }}>
+          {snap.thirdPerson
+            ? "● 3rd Person View: Head & Neck bones fully rendered."
+            : "● 1st Person View: Head & Neck collapsed to 0 for clear camera vision; body limbs visible looking down."}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function WeaponsBlock({ ctx }: BlockComponentProps) {
+  const state = useBlockState(ctx, initialEngineState, onEngineSnapshot);
+  const caliber = state.snap.caliber ?? 0;
+
+  return (
+    <div className="block">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span style={{ fontSize: "var(--font-size-md)", fontWeight: 600 }}>Weapons & Ballistics</span>
+        <span className="pill ok">Hitscan + Kinetic</span>
+      </div>
+
+      <div style={{ marginTop: "10px" }}>
+        <div style={{ fontSize: "var(--font-size-xs)", color: "var(--text-muted)", marginBottom: "4px" }}>ACTIVE CALIBER</div>
+        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+          {[
+            { id: 0, label: "1: Light (9mm)" },
+            { id: 1, label: "2: Medium (Rifle)" },
+            { id: 2, label: "3: Heavy (Shotgun)" },
+            { id: 3, label: "4: Energy (Beam)" }
+          ].map((c) => (
+            <button
+              key={c.id}
+              className="cc-nav"
+              style={{
+                background: caliber === c.id ? "var(--accent)" : "var(--bg-raised)",
+                color: caliber === c.id ? "#fff" : "var(--text)"
+              }}
+              onClick={() => postEngineAction({ type: "SET_CALIBER", caliber: c.id }, ctx.dispatch)}
+            >
+              {c.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ display: "flex", gap: "8px", marginTop: "12px" }}>
+        <button
+          className="cc-nav"
+          onClick={() => postEngineAction({ type: "CYCLE_WEAPON" }, ctx.dispatch)}
+        >
+          🔄 Cycle Weapon (V)
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// -----------------------------------------------------------------------------
+// 3. Visuals & Environment Blocks
+// -----------------------------------------------------------------------------
 
 export function VisualParametersBlock({ ctx }: BlockComponentProps) {
   const state = useBlockState(ctx, initialEngineState, onEngineSnapshot);
@@ -299,34 +578,17 @@ export function VisualParametersBlock({ ctx }: BlockComponentProps) {
     }, ctx.dispatch);
   };
 
-  const applyPreset = (name: string) => {
-    postEngineAction({
-      type: "APPLY_PRESET",
-      name
-    }, ctx.dispatch);
-  };
-
-  const resetDefaults = () => {
-    postEngineAction({ type: "RESET_VISUAL_PARAMS" }, ctx.dispatch);
-  };
-
   return (
     <div className="block">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span style={{ fontSize: "var(--font-size-md)", fontWeight: 600 }}>Visual Style & Post Pipeline</span>
+        <span style={{ fontSize: "var(--font-size-md)", fontWeight: 600 }}>Post-Processing Parameters</span>
         <button
           className="cc-nav"
           style={{ padding: "3px 8px", fontSize: "var(--font-size-xs)" }}
-          onClick={resetDefaults}
+          onClick={() => postEngineAction({ type: "RESET_VISUAL_PARAMS" }, ctx.dispatch)}
         >
           ↺ Reset Defaults
         </button>
-      </div>
-
-      <div style={{ display: "flex", gap: "6px", marginTop: "8px", flexWrap: "wrap" }}>
-        <button className="cc-nav" onClick={() => applyPreset("Retro")}>🕹️ Retro CRT</button>
-        <button className="cc-nav" onClick={() => applyPreset("Clean")}>✨ Clean Modern</button>
-        <button className="cc-nav" onClick={() => applyPreset("Original")}>📐 Original Look</button>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginTop: "12px" }}>
@@ -426,15 +688,82 @@ export function VisualParametersBlock({ ctx }: BlockComponentProps) {
           />
         </div>
       </div>
+    </div>
+  );
+}
 
-      <div style={{ display: "flex", gap: "16px", marginTop: "12px", flexWrap: "wrap", fontSize: "var(--font-size-sm)" }}>
+export function StylePresetsBlock({ ctx }: BlockComponentProps) {
+  const applyPreset = (name: string) => {
+    postEngineAction({ type: "APPLY_PRESET", name }, ctx.dispatch);
+  };
+
+  return (
+    <div className="block">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span style={{ fontSize: "var(--font-size-md)", fontWeight: 600 }}>Renderer Style Presets</span>
+        <span className="pill ok">Registry Linked</span>
+      </div>
+
+      <div style={{ display: "flex", gap: "8px", marginTop: "12px", flexWrap: "wrap" }}>
+        <button className="cc-nav" onClick={() => applyPreset("Retro")}>🕹️ Retro CRT</button>
+        <button className="cc-nav" onClick={() => applyPreset("Clean")}>✨ Clean Modern</button>
+        <button className="cc-nav" onClick={() => applyPreset("Original")}>📐 Original Flat</button>
+      </div>
+
+      <div style={{ marginTop: "10px", fontSize: "var(--font-size-xs)", color: "var(--text-muted)" }}>
+        Applies unified parameters for render scaling, 4-bit posterization, spatial dithering, and fisheye lens effects.
+      </div>
+    </div>
+  );
+}
+
+export function EnvironmentLightingBlock({ ctx }: BlockComponentProps) {
+  const state = useBlockState(ctx, initialEngineState, onEngineSnapshot);
+  const snap = state.snap;
+  const params = snap.visualParams ?? {};
+  const timeOfDay = snap.timeOfDay ?? 0.25;
+
+  const setParam = (key: string, value: number | boolean) => {
+    postEngineAction({
+      type: "SET_VISUAL_PARAM",
+      key,
+      value: typeof value === "boolean" ? (value ? 1 : 0) : value
+    }, ctx.dispatch);
+  };
+
+  return (
+    <div className="block">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span style={{ fontSize: "var(--font-size-md)", fontWeight: 600 }}>Environment & Sky Lighting</span>
+        <span className={`pill ${timeOfDay > 0.7 || timeOfDay < 0.2 ? "warn" : "ok"}`}>
+          {timeOfDay > 0.7 || timeOfDay < 0.2 ? "🌙 Night (Moon Dir Active)" : "☀️ Day (Sun Zenith)"}
+        </span>
+      </div>
+
+      <div style={{ marginTop: "12px" }}>
+        <label style={{ fontSize: "var(--font-size-xs)", display: "flex", justifyContent: "space-between" }}>
+          <span>Time of Day</span>
+          <span className="mono">{(timeOfDay * 24).toFixed(1)}:00 ({timeOfDay.toFixed(2)})</span>
+        </label>
+        <input
+          type="range"
+          min={0.0}
+          max={1.0}
+          step={0.02}
+          value={timeOfDay}
+          onChange={(e) => postEngineAction({ type: "SET_TIME_OF_DAY", timeOfDay: parseFloat(e.target.value) }, ctx.dispatch)}
+          style={{ width: "100%" }}
+        />
+      </div>
+
+      <div style={{ display: "flex", gap: "16px", marginTop: "14px", flexWrap: "wrap", fontSize: "var(--font-size-sm)" }}>
         <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer" }}>
           <input
             type="checkbox"
             checked={Boolean(params.upscale_nearest ?? true)}
             onChange={(e) => setParam("upscale_nearest", e.target.checked)}
           />
-          Nearest Upscale
+          Nearest Pixel Upscale
         </label>
 
         <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer" }}>
@@ -443,7 +772,7 @@ export function VisualParametersBlock({ ctx }: BlockComponentProps) {
             checked={Boolean(params.textures ?? true)}
             onChange={(e) => setParam("textures", e.target.checked)}
           />
-          Textures Active
+          CC0 Texture Array Active
         </label>
 
         <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer" }}>
@@ -452,100 +781,263 @@ export function VisualParametersBlock({ ctx }: BlockComponentProps) {
             checked={Boolean(params.shadows ?? true)}
             onChange={(e) => setParam("shadows", e.target.checked)}
           />
-          Occupancy Shadows
+          Occupancy-Volume Raymarched Shadows
         </label>
       </div>
     </div>
   );
 }
 
-export function MapSyncBlock({ ctx }: BlockComponentProps) {
+// -----------------------------------------------------------------------------
+// 4. Telemetry & Console Blocks
+// -----------------------------------------------------------------------------
+
+export function PerformanceTelemetryBlock({ ctx }: BlockComponentProps) {
   const state = useBlockState(ctx, initialEngineState, onEngineSnapshot);
-  const map = state.snap.map;
+  const snap = state.snap;
+  const isPaused = Boolean(snap.paused);
 
   return (
     <div className="block">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span style={{ fontSize: "var(--font-size-md)", fontWeight: 600 }}>Map & Java Painter Coexistence</span>
-        <span className="pill ok">Shared voxfmt v2</span>
+        <span style={{ fontSize: "var(--font-size-md)", fontWeight: 600 }}>Simulation & Viewport Telemetry</span>
+        <span className={`pill ${isPaused ? "warn" : "ok"}`}>
+          {isPaused ? "PAUSED (Sim Idle)" : "RUNNING (120 Hz Sim Lock)"}
+        </span>
       </div>
 
-      <div style={{ background: "var(--bg-raised)", borderRadius: "var(--radius-sm)", padding: "10px", marginTop: "8px", fontSize: "var(--font-size-sm)" }}>
-        <div><strong>Active Map:</strong> <span className="mono">{map?.path || "data/maps/warehouse_v2.map.vox.json"}</span></div>
-        <div style={{ marginTop: "4px" }}><strong>Prefabs Stamped:</strong> <span className="mono">{map?.prefabs ?? 0}</span></div>
-        <div style={{ marginTop: "4px", color: "var(--status-ok-text)" }}>
-          ● Live Disk Watcher: Active (edits saved in Java Painter hot-reload in real-time)
+      <div className="metrics-row" style={{ marginTop: "10px" }}>
+        <div className="metric">
+          <div className="muted" style={{ fontSize: "var(--font-size-xs)" }}>SIM TICK</div>
+          <div style={{ fontSize: "16px", fontWeight: 700, fontFamily: "var(--font-mono)" }}>{snap.tick ?? 0}</div>
+        </div>
+        <div className="metric">
+          <div className="muted" style={{ fontSize: "var(--font-size-xs)" }}>PLAYER HEALTH</div>
+          <div style={{ fontSize: "16px", fontWeight: 700, fontFamily: "var(--font-mono)", color: (snap.health ?? 100) < 50 ? "#ef4444" : "#22c55e" }}>
+            {snap.health !== undefined ? snap.health.toFixed(1) : "--"}
+          </div>
+        </div>
+        <div className="metric">
+          <div className="muted" style={{ fontSize: "var(--font-size-xs)" }}>LIVE VERTICES</div>
+          <div style={{ fontSize: "16px", fontWeight: 700, fontFamily: "var(--font-mono)" }}>
+            {snap.vertices ? snap.vertices.toLocaleString() : "--"}
+          </div>
+        </div>
+        <div className="metric">
+          <div className="muted" style={{ fontSize: "var(--font-size-xs)" }}>CAMERA PERSPECTIVE</div>
+          <div style={{ fontSize: "14px", fontWeight: 600 }}>
+            {snap.thirdPerson ? "3rd Person" : "1st Person"}
+          </div>
         </div>
       </div>
 
       <div style={{ display: "flex", gap: "8px", marginTop: "12px", flexWrap: "wrap" }}>
         <button
           className="cc-nav"
-          onClick={() => postEngineAction({ type: "RELOAD_MAP" }, ctx.dispatch)}
+          style={{ background: isPaused ? "var(--accent)" : "var(--bg-raised)", color: isPaused ? "#fff" : "var(--text)" }}
+          onClick={() => postEngineAction({ type: "TOGGLE_PAUSE" }, ctx.dispatch)}
         >
-          🔄 Reload Map from Disk
+          {isPaused ? "▶ Resume Simulation" : "⏸ Pause Simulation"}
         </button>
         <button
           className="cc-nav"
-          onClick={() => postEngineAction({ type: "LAUNCH_JAVA_PAINTER" }, ctx.dispatch)}
+          onClick={() => postEngineAction({ type: "RESET_CAMERA" }, ctx.dispatch)}
         >
-          🎨 Open in Java Painter
+          🎯 Reset Camera
+        </button>
+        <button
+          className="cc-nav"
+          onClick={() => postEngineAction({ type: "SPAWN_PLAYER" }, ctx.dispatch)}
+        >
+          🔄 Respawn Player
         </button>
       </div>
     </div>
   );
 }
 
-export const statusManifest: BlockManifest = {
-  id: "imagoro.engine.status",
-  name: "Engine Status & Viewport",
-  version: "0.1.0",
+export function EngineLogBlock({ ctx }: BlockComponentProps) {
+  const state = useBlockState(ctx, initialEngineState, onEngineSnapshot);
+
+  return (
+    <div className="block">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span style={{ fontSize: "var(--font-size-md)", fontWeight: 600 }}>IPC Event & Engine Log Stream</span>
+        <span className="pill ok">Active Bridge</span>
+      </div>
+
+      <div style={{
+        marginTop: "8px",
+        background: "var(--bg-raised)",
+        borderRadius: "var(--radius-sm)",
+        padding: "8px",
+        fontFamily: "var(--font-mono)",
+        fontSize: "12px",
+        maxHeight: "220px",
+        overflowY: "auto",
+        display: "flex",
+        flexDirection: "column",
+        gap: "4px"
+      }}>
+        {state.logs.map((line, idx) => (
+          <div key={idx} style={{ color: line.includes("UI ->") ? "#38bdf8" : line.includes("system") ? "#22c55e" : "var(--text-muted)" }}>
+            {line}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// -----------------------------------------------------------------------------
+// Block Manifests & Host Registration
+// -----------------------------------------------------------------------------
+
+export const mapInspectorManifest: BlockManifest = {
+  id: "engine.map.inspector",
+  name: "Voxel Raycast & Properties",
+  version: "0.2.0",
+  family: "console",
+  substrates: ["react"],
+  size: { min: [320, 180], ideal: [540, 260] },
+  ports: { in: [{ name: "events", type: "event[]" }], out: [] }
+};
+
+export const mapToolsManifest: BlockManifest = {
+  id: "engine.map.tools",
+  name: "Material Palette & Sculpt Tools",
+  version: "0.2.0",
+  family: "console",
+  substrates: ["react"],
+  size: { min: [320, 220], ideal: [540, 300] },
+  ports: { in: [{ name: "events", type: "event[]" }], out: [] }
+};
+
+export const mapSyncManifest: BlockManifest = {
+  id: "engine.map.sync",
+  name: "Map Format & Java Painter Sync",
+  version: "0.2.0",
   family: "console",
   substrates: ["react"],
   size: { min: [320, 160], ideal: [540, 220] },
   ports: { in: [{ name: "events", type: "event[]" }], out: [] }
 };
 
-export const inspectorManifest: BlockManifest = {
-  id: "imagoro.engine.inspector",
-  name: "Voxel Inspector & Palette",
-  version: "0.1.0",
+export const mapTerrainManifest: BlockManifest = {
+  id: "engine.map.terrain",
+  name: "World Dimensions & Terrain",
+  version: "0.2.0",
   family: "console",
   substrates: ["react"],
-  size: { min: [320, 220], ideal: [540, 320] },
+  size: { min: [320, 160], ideal: [540, 220] },
   ports: { in: [{ name: "events", type: "event[]" }], out: [] }
 };
 
-export const visualsManifest: BlockManifest = {
-  id: "imagoro.engine.visuals",
-  name: "Visual Parameters & Presets",
-  version: "0.1.0",
+export const cameraPerspectiveManifest: BlockManifest = {
+  id: "engine.model.camera",
+  name: "Camera & Perspective Tracking",
+  version: "0.2.0",
+  family: "console",
+  substrates: ["react"],
+  size: { min: [320, 180], ideal: [540, 260] },
+  ports: { in: [{ name: "events", type: "event[]" }], out: [] }
+};
+
+export const locomotionManifest: BlockManifest = {
+  id: "engine.model.locomotion",
+  name: "Procedural Locomotion & Stance",
+  version: "0.2.0",
+  family: "console",
+  substrates: ["react"],
+  size: { min: [320, 200], ideal: [540, 280] },
+  ports: { in: [{ name: "events", type: "event[]" }], out: [] }
+};
+
+export const characterRigManifest: BlockManifest = {
+  id: "engine.model.character",
+  name: "Skeletal Hierarchy & Rig",
+  version: "0.2.0",
+  family: "console",
+  substrates: ["react"],
+  size: { min: [320, 160], ideal: [540, 220] },
+  ports: { in: [{ name: "events", type: "event[]" }], out: [] }
+};
+
+export const weaponsManifest: BlockManifest = {
+  id: "engine.model.weapons",
+  name: "Weapons & Item Palette",
+  version: "0.2.0",
+  family: "console",
+  substrates: ["react"],
+  size: { min: [320, 160], ideal: [540, 220] },
+  ports: { in: [{ name: "events", type: "event[]" }], out: [] }
+};
+
+export const visualsParamsManifest: BlockManifest = {
+  id: "engine.visuals.params",
+  name: "Post-Processing Pipeline",
+  version: "0.2.0",
   family: "console",
   substrates: ["react"],
   size: { min: [320, 240], ideal: [540, 340] },
   ports: { in: [{ name: "events", type: "event[]" }], out: [] }
 };
 
-export const mapManifest: BlockManifest = {
-  id: "imagoro.engine.map",
-  name: "Map Sync & Java Painter",
-  version: "0.1.0",
+export const visualsPresetsManifest: BlockManifest = {
+  id: "engine.visuals.presets",
+  name: "Style Presets",
+  version: "0.2.0",
   family: "console",
   substrates: ["react"],
   size: { min: [320, 160], ideal: [540, 220] },
   ports: { in: [{ name: "events", type: "event[]" }], out: [] }
 };
 
-export const ENGINE_MANIFESTS: BlockManifest[] = [
-  statusManifest,
-  inspectorManifest,
-  visualsManifest,
-  mapManifest
-];
+export const visualsLightingManifest: BlockManifest = {
+  id: "engine.visuals.lighting",
+  name: "Environment Lighting & Shadows",
+  version: "0.2.0",
+  family: "console",
+  substrates: ["react"],
+  size: { min: [320, 180], ideal: [540, 260] },
+  ports: { in: [{ name: "events", type: "event[]" }], out: [] }
+};
+
+export const telemetryManifest: BlockManifest = {
+  id: "engine.status.telemetry",
+  name: "Simulation & Viewport Telemetry",
+  version: "0.2.0",
+  family: "console",
+  substrates: ["react"],
+  size: { min: [320, 180], ideal: [540, 240] },
+  ports: { in: [{ name: "events", type: "event[]" }], out: [] }
+};
+
+export const logManifest: BlockManifest = {
+  id: "engine.console.log",
+  name: "IPC Event & Engine Log Stream",
+  version: "0.2.0",
+  family: "console",
+  substrates: ["react"],
+  size: { min: [320, 160], ideal: [540, 220] },
+  ports: { in: [{ name: "events", type: "event[]" }], out: [] }
+};
 
 export function registerEngineBlocks(host: ReactBlockHost): void {
-  host.register(statusManifest.id, { manifest: statusManifest, Component: EngineStatusBlock });
-  host.register(inspectorManifest.id, { manifest: inspectorManifest, Component: VoxelInspectorBlock });
-  host.register(visualsManifest.id, { manifest: visualsManifest, Component: VisualParametersBlock });
-  host.register(mapManifest.id, { manifest: mapManifest, Component: MapSyncBlock });
+  host.register(mapInspectorManifest.id, { manifest: mapInspectorManifest, Component: MapInspectorBlock });
+  host.register(mapToolsManifest.id, { manifest: mapToolsManifest, Component: MapToolsBlock });
+  host.register(mapSyncManifest.id, { manifest: mapSyncManifest, Component: MapSyncBlock });
+  host.register(mapTerrainManifest.id, { manifest: mapTerrainManifest, Component: WorldTerrainBlock });
+
+  host.register(cameraPerspectiveManifest.id, { manifest: cameraPerspectiveManifest, Component: CameraPerspectiveBlock });
+  host.register(locomotionManifest.id, { manifest: locomotionManifest, Component: LocomotionBlock });
+  host.register(characterRigManifest.id, { manifest: characterRigManifest, Component: CharacterRigBlock });
+  host.register(weaponsManifest.id, { manifest: weaponsManifest, Component: WeaponsBlock });
+
+  host.register(visualsParamsManifest.id, { manifest: visualsParamsManifest, Component: VisualParametersBlock });
+  host.register(visualsPresetsManifest.id, { manifest: visualsPresetsManifest, Component: StylePresetsBlock });
+  host.register(visualsLightingManifest.id, { manifest: visualsLightingManifest, Component: EnvironmentLightingBlock });
+
+  host.register(telemetryManifest.id, { manifest: telemetryManifest, Component: PerformanceTelemetryBlock });
+  host.register(logManifest.id, { manifest: logManifest, Component: EngineLogBlock });
 }

@@ -18,87 +18,44 @@ export interface Section {
 
 export const SECTIONS: Section[] = [
   {
-    id: "engine",
-    label: "Voxel Engine",
-    blurb: "Live 3D viewport telemetry, voxel inspector, visual parameters & map sync.",
+    id: "map",
+    label: "Map Editor",
+    blurb: "Live voxel raycasting, painting, carve/demolition tools, palette management, and Java Painter sync.",
     slots: [
-      { block: "imagoro.engine.status", span: "pair", label: "Engine Status & Camera" },
-      { block: "imagoro.engine.inspector", span: "pair", label: "Voxel Inspector & Palette" },
-      { block: "imagoro.engine.visuals", span: "pair", label: "Visual Parameters & Presets" },
-      { block: "imagoro.engine.map", span: "pair", label: "Map & Java Painter Sync" },
-      { block: "imagoro.console", span: "full", label: "Engine Log & Bridge Activity" }
+      { block: "engine.map.inspector", span: "pair", label: "Voxel Raycast & Properties" },
+      { block: "engine.map.tools", span: "pair", label: "Material Palette & Sculpt Tools" },
+      { block: "engine.map.sync", span: "pair", label: "Map Format & Java Painter Sync" },
+      { block: "engine.map.terrain", span: "pair", label: "World Dimensions & Terrain" }
     ]
   },
   {
-    id: "overview",
-    label: "Overview",
-    blurb: "Live business + analytics posture at a glance.",
+    id: "model",
+    label: "Model & Character",
+    blurb: "Humanoid skeletal rig, limb kinematics, procedural locomotion, and camera perspective.",
     slots: [
-      { block: "imagoro.metrics", span: "pair" },
-      { block: "imagoro.weather", span: "pair" },
-      { block: "imagoro.route" },
-      { block: "imagoro.visualizer", span: "pair" }
+      { block: "engine.model.camera", span: "pair", label: "Camera & Perspective Tracking" },
+      { block: "engine.model.locomotion", span: "pair", label: "Procedural Locomotion & Stance" },
+      { block: "engine.model.character", span: "pair", label: "Skeletal Hierarchy & Rig" },
+      { block: "engine.model.weapons", span: "pair", label: "Weapons & Item Palette" }
     ]
   },
   {
-    id: "tasks",
-    label: "Crew Tasks",
-    blurb: "The node canvas composes crew tasks as a DAG (imports the demo tasks.yaml crew).",
+    id: "visuals",
+    label: "Visuals & Shaders",
+    blurb: "Vulkan post-processing chain, retro CRT emulation, render scale, lighting, and occupancy shadows.",
     slots: [
-      {
-        block: "imagoro.graph",
-        span: "full",
-        config: { role: "enterprise" },
-        label: "Crew task graph"
-      },
-      { block: "imagoro.console" },
-      { block: "imagoro.terminal" }
+      { block: "engine.visuals.params", span: "pair", label: "Post-Processing Pipeline" },
+      { block: "engine.visuals.presets", span: "pair", label: "Style Presets" },
+      { block: "engine.visuals.lighting", span: "full", label: "Environment Lighting & Shadow Volumes" }
     ]
   },
   {
-    id: "pipeline",
-    label: "Pipeline",
-    blurb: "Pipeline monitor + blackboard categories, scoped by role.",
+    id: "telemetry",
+    label: "Telemetry & Logs",
+    blurb: "Simulation timing, vertex counts, GPU memory allocations, and IPC bridge activity log.",
     slots: [
-      { block: "imagoro.pipeline", span: "pair" },
-      {
-        block: "imagoro.blackboard",
-        span: "pair",
-        config: { category: "pipeline", role: "business" },
-        label: "Blackboard — pipeline"
-      },
-      { block: "imagoro.audit", span: "full" }
-    ]
-  },
-  {
-    id: "network",
-    label: "Network",
-    blurb: "Mesh + route awareness across surfaces.",
-    slots: [
-      { block: "imagoro.map", span: "full" },
-      { block: "imagoro.route" },
-      { block: "imagoro.metrics" },
-      { block: "imagoro.visualizer" }
-    ]
-  },
-  {
-    id: "control",
-    label: "Control",
-    blurb: "Chat, console and terminal for operators.",
-    slots: [
-      { block: "imagoro.chat", span: "full" },
-      { block: "imagoro.console" },
-      { block: "imagoro.terminal" }
-    ]
-  },
-  {
-    id: "intent",
-    label: "What can I do?",
-    blurb: "Route a goal to a crew role, block or tool — plan preview only, nothing executes.",
-    slots: [
-      { block: "imagoro.intent", span: "full", config: { role: "enterprise" }, label: "Intent bar" },
-      { block: "imagoro.sidebar", span: "pair", config: { role: "enterprise" }, label: "Registry sidebar" },
-      { block: "imagoro.console", span: "pair" }
+      { block: "engine.status.telemetry", span: "full", label: "Simulation & Viewport Telemetry" },
+      { block: "engine.console.log", span: "full", label: "IPC Event & Engine Log Stream" }
     ]
   }
 ];

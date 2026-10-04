@@ -1,22 +1,15 @@
 import { StrictMode, useState } from "react";
 import { createRoot } from "react-dom/client";
-import type { BusEvent } from "@imagoro/core";
-import { EventBus, connectSse, replayFixtures } from "@imagoro/core";
-import fixtures from "@imagoro/core/fixtures";
+import { EventBus } from "@imagoro/core";
 import { ReactBlockHost, makeCtx } from "@imagoro/renderer-react";
-import { registerAll } from "@imagoro/blocks-registrations";
-import { registerCommandCenterOverlay } from "./overlay-blocks.js";
 import { registerEngineBlocks } from "./engine-blocks.js";
 import "@imagoro/renderer-react/app.css";
-import "leaflet/dist/leaflet.css";
 import "../../../design/gen.css";
 import { SECTIONS, type Section, type SlotSpec } from "./sections.js";
 import "./shell.css";
 
 const bus = new EventBus();
 const host = new ReactBlockHost();
-registerAll(host);
-registerCommandCenterOverlay(host);
 registerEngineBlocks(host);
 
 function Slot({ spec }: { spec: SlotSpec }) {
@@ -49,14 +42,16 @@ function Workspace({ section }: { section: Section }) {
 }
 
 function CommandCenter() {
-  const [sectionId, setSectionId] = useState<string>(SECTIONS[0]?.id ?? "overview");
+  const [sectionId, setSectionId] = useState<string>(SECTIONS[0]?.id ?? "map");
   const section = SECTIONS.find((s) => s.id === sectionId) ?? SECTIONS[0];
+  const isWebView2 = typeof window !== "undefined" && Boolean((window as any).chrome?.webview);
+
   return (
     <div className="cc">
       <nav className="cc-rail" aria-label="command center sections">
         <div className="cc-brand">
-          <strong>imagoro</strong>
-          <span>command center</span>
+          <strong>VOXEL FPS</strong>
+          <span>map & model editor</span>
         </div>
         {SECTIONS.map((s) => (
           <button
@@ -68,23 +63,23 @@ function CommandCenter() {
           </button>
         ))}
         <div className="cc-rail-foot">
-          <span className="pill ok">blocks: {host.size}</span>
-          <span className="pill mute">react only</span>
+          <span className="pill ok">editor tools: {host.size}</span>
+          <span className="pill mute">win32 child</span>
         </div>
       </nav>
       <main className="cc-main">
         <header className="card header">
           <div>
-            <h1 className="cc-title">Imagoro Command Center</h1>
-            <span className="muted">monolithic voxel engine workspace · win32 webview2 bridge</span>
+            <h1 className="cc-title">Map & Model Workspace</h1>
+            <span className="muted">authoritative 3d simulation · win32 webview2 bridge · live telemetry</span>
           </div>
           <div className="status-group">
-            {typeof window !== "undefined" && Boolean((window as any).chrome?.webview) ? (
+            {isWebView2 ? (
               <span className="pill ok">⚡ WebView2 Native Bridge Active</span>
             ) : (
-              <span className="pill mute">browser dev mode</span>
+              <span className="pill mute">browser standalone dev</span>
             )}
-            <span className="pill mute">SSE /api/pipeline/stream</span>
+            <span className="pill ok">Sim 120 Hz</span>
           </div>
         </header>
         <Workspace key={section?.id} section={section ?? SECTIONS[0]!} />
@@ -125,9 +120,3 @@ createRoot(document.getElementById("root")!).render(
     <CommandCenter />
   </StrictMode>
 );
-
-const cancel = replayFixtures(bus, fixtures, 30);
-const stopSse = connectSse({ url: "/api/pipeline/stream", onEvent: (evt: BusEvent) => bus.dispatch(evt) });
-
-void cancel;
-void stopSse;
