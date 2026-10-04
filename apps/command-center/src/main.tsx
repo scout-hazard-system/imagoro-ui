@@ -6,6 +6,7 @@ import fixtures from "@imagoro/core/fixtures";
 import { ReactBlockHost, makeCtx } from "@imagoro/renderer-react";
 import { registerAll } from "@imagoro/blocks-registrations";
 import { registerCommandCenterOverlay } from "./overlay-blocks.js";
+import { registerEngineBlocks } from "./engine-blocks.js";
 import "@imagoro/renderer-react/app.css";
 import "leaflet/dist/leaflet.css";
 import "../../../design/gen.css";
@@ -16,6 +17,7 @@ const bus = new EventBus();
 const host = new ReactBlockHost();
 registerAll(host);
 registerCommandCenterOverlay(host);
+registerEngineBlocks(host);
 
 function Slot({ spec }: { spec: SlotSpec }) {
   const entry = host.entry(spec.block);
@@ -74,17 +76,48 @@ function CommandCenter() {
         <header className="card header">
           <div>
             <h1 className="cc-title">Imagoro Command Center</h1>
-            <span className="muted">composable block GUI · node canvas · fixtures replay + SSE</span>
+            <span className="muted">monolithic voxel engine workspace · win32 webview2 bridge</span>
           </div>
           <div className="status-group">
+            {typeof window !== "undefined" && Boolean((window as any).chrome?.webview) ? (
+              <span className="pill ok">⚡ WebView2 Native Bridge Active</span>
+            ) : (
+              <span className="pill mute">browser dev mode</span>
+            )}
             <span className="pill mute">SSE /api/pipeline/stream</span>
-            <span className="pill mute">fixtures replay</span>
           </div>
         </header>
         <Workspace key={section?.id} section={section ?? SECTIONS[0]!} />
       </main>
     </div>
   );
+}
+
+if (typeof window !== "undefined" && (window as any).chrome?.webview) {
+  (window as any).chrome.webview.addEventListener("message", (evt: any) => {
+    const raw = evt.data;
+    if (!raw) return;
+    try {
+      const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+      const type = parsed.type || "engine/event";
+      bus.dispatch({
+        type,
+        ts: Date.now(),
+        payload: parsed.data ?? parsed.payload ?? parsed
+      });
+    } catch {
+      bus.dispatch({
+        type: "engine/raw",
+        ts: Date.now(),
+        payload: { raw }
+      });
+    }
+  });
+  bus.dispatch({
+    type: "console/log",
+    ts: Date.now(),
+    payload: { line: "[webview] Connected to native C++ Vulkan voxel engine bridge" }
+  });
 }
 
 createRoot(document.getElementById("root")!).render(
