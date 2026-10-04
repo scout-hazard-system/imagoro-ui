@@ -6,6 +6,14 @@ import L from "leaflet";
 
 export { manifest } from "./manifest.js";
 
+// Leaflet treats a string popup as HTML (innerHTML). Labels arrive over the bus
+// from scanner/agent output, so always hand Leaflet a text node, never markup.
+function textPopup(label: unknown): HTMLElement {
+  const node = document.createElement("span");
+  node.textContent = String(label ?? "alert");
+  return node;
+}
+
 export default function MapBlock({ ctx }: BlockComponentProps) {
   const ref = useRef<HTMLDivElement | null>(null);
 
@@ -27,7 +35,7 @@ export default function MapBlock({ ctx }: BlockComponentProps) {
         if (evt.type === "map/gps") {
           map.panTo([lat, lon]);
         } else {
-          L.marker([lat, lon]).addTo(map).bindPopup(String(p.label ?? "alert"));
+          L.marker([lat, lon]).addTo(map).bindPopup(textPopup(p.label));
         }
       }
     });
