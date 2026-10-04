@@ -18,6 +18,18 @@ export interface Section {
 
 export const SECTIONS: Section[] = [
   {
+    id: "engine",
+    label: "Voxel Engine",
+    blurb: "Live 3D viewport telemetry, voxel inspector, visual parameters & map sync.",
+    slots: [
+      { block: "imagoro.engine.status", span: "pair", label: "Engine Status & Camera" },
+      { block: "imagoro.engine.inspector", span: "pair", label: "Voxel Inspector & Palette" },
+      { block: "imagoro.engine.visuals", span: "pair", label: "Visual Parameters & Presets" },
+      { block: "imagoro.engine.map", span: "pair", label: "Map & Java Painter Sync" },
+      { block: "imagoro.console", span: "full", label: "Engine Log & Bridge Activity" }
+    ]
+  },
+  {
     id: "overview",
     label: "Overview",
     blurb: "Live business + analytics posture at a glance.",
