@@ -24,6 +24,7 @@ export const SECTIONS: Section[] = [
     slots: [
       { block: "engine.map.inspector", span: "pair", label: "Voxel Raycast & Properties" },
       { block: "engine.map.tools", span: "pair", label: "Material Palette & Sculpt Tools" },
+      { block: "engine.map.structural", span: "full", label: "Structural Integrity Matrix" },
       { block: "engine.map.sync", span: "pair", label: "Map Format & Java Painter Sync" },
       { block: "engine.map.terrain", span: "pair", label: "World Dimensions & Terrain" }
     ]
