@@ -19,6 +19,8 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tauri = { version = "2", features = [] }
 tauri-plugin-opener = "2"
+# Kao gateway client (plain HTTP over the WireGuard mesh; no TLS stack needed)
+ureq = { version = "2", default-features = false }
 
 [profile.release]
 codegen-units = 1

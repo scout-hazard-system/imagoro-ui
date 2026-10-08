@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { IntentSession, ROLES, isDangerousTool, type IntentProposal } from "@imagoro/core";
 import type { BlockComponentProps } from "@imagoro/renderer-react";
 
@@ -11,11 +11,32 @@ export default function IntentBlock({ ctx }: BlockComponentProps) {
   const [proposal, setProposal] = useState<IntentProposal | null>(null);
   const [executing, setExecuting] = useState(false);
   const [role, setRole] = useState<string>(() => String(ctx.config.role ?? "business"));
+  const [outcome, setOutcome] = useState<string | null>(null);
+
+  // The host runs confirmed plans through the broker and answers with intent/execute-result;
+  // without listening for it the button would stay on "running…" forever.
+  useEffect(
+    () =>
+      ctx.subscribe((evt) => {
+        if (evt.type !== "intent/execute-result" || !proposal || evt.payload?.id !== proposal.id) return;
+        const results = (evt.payload?.results as { ok: boolean; denial?: string }[] | undefined) ?? [];
+        const ok = results.filter((r) => r.ok).length;
+        const denied = results.filter((r) => !r.ok);
+        setExecuting(false);
+        setOutcome(
+          `${ok}/${results.length} step(s) ran` +
+            (denied.length ? ` · ${denied.length} blocked: ${denied.map((d) => d.denial).filter(Boolean).join("; ")}` : "") +
+            " · details in the Console below"
+        );
+      }),
+    [ctx, proposal]
+  );
 
   function propose() {
     const p = session.propose(text, role, dryRun);
     setProposal(p);
     setExecuting(false);
+    setOutcome(null);
     ctx.dispatch({
       type: "intent/propose",
       ts: Date.now(),
@@ -27,6 +48,7 @@ export default function IntentBlock({ ctx }: BlockComponentProps) {
     const confirmed = session.confirm(p);
     setProposal(confirmed);
     setExecuting(true);
+    setOutcome(null);
     ctx.dispatch({
       type: "intent/execute",
       ts: Date.now(),
@@ -84,7 +106,7 @@ export default function IntentBlock({ ctx }: BlockComponentProps) {
             </ol>
           )}
           {proposal.dryRun ? (
-            <p className="muted">Dry-run: nothing executed. Confirmed execution is enabled once the broker (L3) is wired.</p>
+            <p className="muted">Dry-run: plan preview only, nothing ran. Untick “dry-run” and propose again to run it (you confirm each plan first).</p>
           ) : (
             <button
               className="pill ok"
@@ -94,6 +116,7 @@ export default function IntentBlock({ ctx }: BlockComponentProps) {
               {executing ? "running…" : "Confirm & execute"}
             </button>
           )}
+          {outcome ? <p className="muted">{outcome}</p> : null}
           {proposal.steps.some((s) => isDangerousTool(s.tool)) ? (
             <p className="muted">This plan contains dangerous steps (writes/system). Confirmation is required.</p>
           ) : null}

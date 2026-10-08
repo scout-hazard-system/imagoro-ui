@@ -38,3 +38,21 @@ pnpm tauri build    # release bundle (msi/nsis on Windows, web/AppImage on Linux
   the frontend (same architecture as the web build).
 - Icons: `pnpm tauri icon <svg-or-png>` generates the `icons/` set if a custom icon is ever needed.
 - Flatpak (Linux) packaging for this shell: `infra/flatpak/` (M6). Android: `infra/webview-android/` (M6).
+## Scout Harness (second desktop profile)
+
+The same Rust shell also packages the **Harness Console** (`apps/harness-console`) as a standalone app:
+
+```
+pnpm harness:dev     # dev URL http://localhost:8791
+pnpm harness:build   # NSIS installer: target/release/bundle/nsis/Scout Harness_<ver>_x64-setup.exe
+```
+
+- `tauri.harness.conf.json` is merged over `tauri.conf.json` (`--config`): product "Scout Harness",
+  identifier `org.scout.harness`, binary `scout-harness.exe`, frontend `../apps/harness-console/dist`.
+- Kao traffic goes through the native `kao_rpc` command, not the network from the page: the gateway URL
+  (`IMAGORO_MCP_URL`, default `http://10.66.2.2:19001` on the Scout mesh) and the token
+  (`%USERPROFILE%\.scout-mesh\kao-gateway.token`, or `KAO_TOKEN_FILE`) are resolved in Rust, so the page can
+  neither read the token nor send it elsewhere. The CSP keeps `connect-src` to `'self'` + IPC.
+- `stack_status` probes the local engines (Ollama :11435, tool-role proxies :11434/:11436), the NUC engine,
+  Kao and the blackboard; `stack_start` runs `%USERPROFILE%\bin\start-ollama-local.cmd` (the same script the
+  Windows Startup folder uses).
