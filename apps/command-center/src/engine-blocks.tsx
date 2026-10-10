@@ -71,6 +71,13 @@ export interface ViewportSnapshotData {
     isReloading?: boolean;
     adsAlpha?: number;
   };
+  anim?: {
+    activeClip?: string;
+    clipTime?: number;
+    duration?: number;
+    isPlaying?: boolean;
+    weight?: number;
+  };
 }
 
 export function postEngineAction(action: Record<string, unknown>, dispatch?: (evt: BusEvent) => void) {
@@ -646,10 +653,30 @@ export function CharacterRigBlock({ ctx }: BlockComponentProps) {
   const holding = snap.character?.holdingWeapon ?? true;
   const reloading = snap.character?.isReloading ?? false;
 
+  const anim = snap.anim ?? {
+    activeClip: "rifle_idle",
+    clipTime: 0.0,
+    duration: 2.0,
+    isPlaying: true,
+    weight: 0.85
+  };
+
+  const clipList = [
+    { id: "rifle_idle", label: "🧘 Idle Ready", dur: 2.0, loop: true },
+    { id: "rifle_fire", label: "💥 Fire Recoil", dur: 0.15, loop: false },
+    { id: "rifle_reload", label: "🔄 Tactical Reload", dur: 1.8, loop: false },
+    { id: "walk", label: "🚶 Walk Cycle", dur: 1.0, loop: true }
+  ];
+
   return (
     <div className="block">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span style={{ fontSize: "var(--font-size-md)", fontWeight: 600 }}>Skeletal Rig & Character Model</span>
+        <div>
+          <span style={{ fontSize: "var(--font-size-md)", fontWeight: 600 }}>Skeletal Rig & Animation Player</span>
+          <span style={{ marginLeft: "8px", fontSize: "var(--font-size-xs)", color: "var(--text-muted)" }}>
+            Clip: <span className="mono">{anim.activeClip ?? "none"}</span>
+          </span>
+        </div>
         <span className="pill ok">32 Bones (20 Active)</span>
       </div>
 
@@ -669,8 +696,89 @@ export function CharacterRigBlock({ ctx }: BlockComponentProps) {
         </div>
       </div>
 
+      <div style={{ marginTop: "12px", background: "var(--bg-raised)", borderRadius: "var(--radius-sm)", padding: "10px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+          <strong style={{ fontSize: "var(--font-size-xs)", textTransform: "uppercase", color: "var(--text-muted)" }}>
+            AUTHORED CLIPS & TIMELINE SCRUBBER
+          </strong>
+          <span className="mono" style={{ fontSize: "var(--font-size-xs)" }}>
+            {(anim.clipTime ?? 0).toFixed(2)}s / {(anim.duration ?? 1.0).toFixed(2)}s
+          </span>
+        </div>
+
+        <div style={{ display: "flex", gap: "6px", marginBottom: "8px", flexWrap: "wrap" }}>
+          {clipList.map((c) => {
+            const isActive = (anim.activeClip === c.id);
+            return (
+              <button
+                key={c.id}
+                className="cc-nav"
+                style={{
+                  background: isActive ? "var(--accent)" : "var(--bg)",
+                  color: isActive ? "#fff" : "var(--text)",
+                  padding: "4px 8px",
+                  fontSize: "var(--font-size-xs)"
+                }}
+                onClick={() => postEngineAction({ type: "SET_ANIM_CLIP", clipId: c.id, loop: c.loop }, ctx.dispatch)}
+              >
+                {c.label}
+              </button>
+            );
+          })}
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <button
+            className="cc-nav"
+            style={{ padding: "4px 8px", fontSize: "var(--font-size-xs)" }}
+            onClick={() => postEngineAction({ type: "SET_ANIM_CLIP", isPlaying: !anim.isPlaying }, ctx.dispatch)}
+          >
+            {anim.isPlaying ? "⏸️ Pause" : "▶️ Play"}
+          </button>
+          <input
+            type="range"
+            min={0}
+            max={Math.max(0.1, anim.duration ?? 1.0)}
+            step={0.01}
+            value={anim.clipTime ?? 0}
+            style={{ flex: 1 }}
+            onChange={(e) => postEngineAction({ type: "SET_ANIM_CLIP", scrubTime: parseFloat(e.target.value) }, ctx.dispatch)}
+          />
+        </div>
+
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "8px", fontSize: "var(--font-size-xs)" }}>
+          <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
+            <span>Speed:</span>
+            {[0.5, 1.0, 1.5, 2.0].map((spd) => (
+              <button
+                key={spd}
+                className="cc-nav"
+                style={{ padding: "2px 6px", fontSize: "10px" }}
+                onClick={() => postEngineAction({ type: "SET_ANIM_CLIP", speed: spd }, ctx.dispatch)}
+              >
+                {spd}x
+              </button>
+            ))}
+          </div>
+
+          <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+            <span>Authored Blend:</span>
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.05}
+              value={anim.weight ?? 0.85}
+              style={{ width: "80px" }}
+              onChange={(e) => postEngineAction({ type: "SET_ANIM_CLIP", weight: parseFloat(e.target.value) }, ctx.dispatch)}
+            />
+            <span className="mono">{Math.round((anim.weight ?? 0.85) * 100)}%</span>
+          </div>
+        </div>
+      </div>
+
       <div style={{ marginTop: "10px", fontSize: "var(--font-size-xs)", color: "var(--text-muted)", marginBottom: "4px" }}>
-        CHARACTER MODEL & ANIMATION ACTIONS
+        RIG TESTING ACTIONS
       </div>
       <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
         <button
@@ -684,14 +792,14 @@ export function CharacterRigBlock({ ctx }: BlockComponentProps) {
           className="cc-nav"
           onClick={() => postEngineAction({ type: "TRIGGER_RECOIL" }, ctx.dispatch)}
         >
-          💥 Recoil Impulse Kick
+          💥 Recoil Kick
         </button>
         <button
           className="cc-nav"
           style={{ background: reloading ? "#eab308" : "var(--bg-raised)", color: reloading ? "#000" : "var(--text)" }}
           onClick={() => postEngineAction({ type: "TRIGGER_RELOAD" }, ctx.dispatch)}
         >
-          🔄 Magazine Reload Sequence (R)
+          🔄 Magazine Reload (R)
         </button>
         <button
           className="cc-nav"
