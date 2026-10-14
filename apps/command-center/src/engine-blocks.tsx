@@ -63,6 +63,14 @@ export interface ViewportSnapshotData {
     dist?: number;
   };
   visualParams?: Record<string, number | boolean>;
+  undoDepth?: number;
+  redoDepth?: number;
+  prefabs?: string[];
+  scene?: {
+    player?: { x: number; y: number; z: number };
+    lights?: Array<{ id: string; x: number; y: number; z: number; intensity?: number }>;
+    prefabs?: Array<{ id: string; x: number; y: number; z: number; rot?: number }>;
+  };
   structural?: StructuralZoneData[];
   activeWeapon?: ActiveWeaponData;
   availableWeapons?: Array<{ id: string; caliber: string; ammoId: string }>;
@@ -1291,6 +1299,154 @@ export function EngineLogBlock({ ctx }: BlockComponentProps) {
 }
 
 // -----------------------------------------------------------------------------
+// Scene & Prefabs (RFC E.4 Scene Hierarchy / E.5 Prefab Authoring)
+// -----------------------------------------------------------------------------
+
+function prefabColor(id: string): string {
+  if (id.startsWith("road")) return "#334155";
+  if (id.includes("pine")) return "#16a34a";
+  if (id.includes("rock")) return "#78716c";
+  if (id.includes("shrub")) return "#4d7c0f";
+  return "#a16207";
+}
+
+export function SceneHierarchyBlock({ ctx }: BlockComponentProps) {
+  const state = useBlockState(ctx, initialEngineState, onEngineSnapshot);
+  const scene = state.snap.scene;
+  const player = scene?.player ?? state.snap.player ?? { x: 0, y: 0, z: 0 };
+  const lights = scene?.lights ?? [];
+  const prefabInstances = scene?.prefabs ?? [];
+  const undoDepth = state.snap.undoDepth ?? 0;
+  const redoDepth = state.snap.redoDepth ?? 0;
+  const cell = (v: number | undefined) => (typeof v === "number" ? v.toFixed(2) : "0.00");
+
+  return (
+    <div className="block">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span style={{ fontSize: "var(--font-size-md)", fontWeight: 600 }}>Scene Hierarchy</span>
+        <span className="pill mute">Authoritative Sim Grid</span>
+      </div>
+
+      <div style={{ display: "flex", gap: "8px", marginTop: "10px" }}>
+        <button
+          className="cc-nav"
+          disabled={undoDepth === 0}
+          onClick={() => postEngineAction({ type: "UNDO" }, ctx.dispatch)}
+          style={{ opacity: undoDepth ? 1 : 0.5 }}
+        >
+          ↶ Undo ({undoDepth})
+        </button>
+        <button
+          className="cc-nav"
+          disabled={redoDepth === 0}
+          onClick={() => postEngineAction({ type: "REDO" }, ctx.dispatch)}
+          style={{ opacity: redoDepth ? 1 : 0.5 }}
+        >
+          ↷ Redo ({redoDepth})
+        </button>
+      </div>
+
+      <div style={{ background: "var(--bg-raised)", borderRadius: "var(--radius-sm)", padding: "10px", marginTop: "10px", fontSize: "var(--font-size-sm)" }}>
+        <div><strong>Player:</strong> <span className="mono">({cell(player.x)}, {cell(player.y)}, {cell(player.z)})</span></div>
+        <div style={{ marginTop: "4px" }}><strong>Lights:</strong> <span className="mono">{lights.length}</span></div>
+        <div style={{ marginTop: "4px" }}><strong>Prefab Instances:</strong> <span className="mono">{prefabInstances.length}</span></div>
+      </div>
+
+      <div style={{ marginTop: "10px", maxHeight: "200px", overflowY: "auto" }}>
+        <div style={{ fontSize: "var(--font-size-xs)", color: "var(--text-muted)", marginBottom: "4px" }}>LIGHTS</div>
+        {lights.length === 0 && <div style={{ fontSize: "var(--font-size-xs)", color: "var(--text-muted)" }}>None placed</div>}
+        {lights.map((l, i) => (
+          <div key={l.id ?? i} style={{ display: "flex", justifyContent: "space-between", fontSize: "var(--font-size-xs)", padding: "2px 0" }}>
+            <span className="mono">{l.id}</span>
+            <span className="mono">({cell(l.x)}, {cell(l.y)}, {cell(l.z)}) · {(l.intensity ?? 1).toFixed(2)}</span>
+          </div>
+        ))}
+
+        <div style={{ fontSize: "var(--font-size-xs)", color: "var(--text-muted)", margin: "8px 0 4px" }}>PREFAB INSTANCES</div>
+        {prefabInstances.length === 0 && <div style={{ fontSize: "var(--font-size-xs)", color: "var(--text-muted)" }}>None stamped</div>}
+        {prefabInstances.map((p, i) => (
+          <div key={`${p.id}-${i}`} style={{ display: "flex", justifyContent: "space-between", fontSize: "var(--font-size-xs)", padding: "2px 0" }}>
+            <span className="mono">{p.id}</span>
+            <span className="mono">({p.x}, {p.y}, {p.z}) r{p.rot ?? 0}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function PrefabBrowserBlock({ ctx }: BlockComponentProps) {
+  const state = useBlockState(ctx, initialEngineState, onEngineSnapshot);
+  const catalog = state.snap.prefabs ?? [];
+  const hasHit = Boolean(state.snap.pick?.hit);
+  const [selected, setSelected] = useState<string>("");
+  const [rot, setRot] = useState<number>(0);
+
+  return (
+    <div className="block">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span style={{ fontSize: "var(--font-size-md)", fontWeight: 600 }}>Prefab Catalog & Stamp</span>
+        <span className="pill mute">{catalog.length} available</span>
+      </div>
+
+      <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "10px" }}>
+        {catalog.length === 0 && (
+          <span style={{ fontSize: "var(--font-size-xs)", color: "var(--text-muted)" }}>No prefabs found under data/prefabs</span>
+        )}
+        {catalog.map((id) => (
+          <button
+            key={id}
+            onClick={() => setSelected(id)}
+            style={{
+              background: selected === id ? "var(--bg-tab-active)" : "var(--bg-raised)",
+              border: selected === id ? `2px solid ${prefabColor(id)}` : "1px solid var(--border)",
+              borderRadius: "var(--radius-sm)",
+              padding: "4px 8px",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              cursor: "pointer",
+              color: "var(--text)"
+            }}
+          >
+            <span style={{ width: "10px", height: "10px", borderRadius: "2px", background: prefabColor(id) }} />
+            <span style={{ fontSize: "var(--font-size-xs)" }}>{id}</span>
+          </button>
+        ))}
+      </div>
+
+      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "10px" }}>
+        <span style={{ fontSize: "var(--font-size-xs)", color: "var(--text-muted)" }}>Rotation (quarter turns, 0-3):</span>
+        <input
+          type="number"
+          min={0}
+          max={3}
+          value={rot}
+          onChange={(e) => setRot((((parseInt(e.target.value) || 0) % 4) + 4) % 4)}
+          style={{ width: "50px", background: "var(--bg-input)", border: "1px solid var(--border)", color: "var(--text)", padding: "3px 6px", borderRadius: "var(--radius-sm)" }}
+        />
+      </div>
+
+      <div style={{ display: "flex", gap: "8px", marginTop: "12px" }}>
+        <button
+          className="cc-nav"
+          disabled={!hasHit || !selected}
+          onClick={() => {
+            if (selected) postEngineAction({ type: "PREFAB_STAMP", id: selected, rot }, ctx.dispatch);
+          }}
+          style={{ opacity: hasHit && selected ? 1 : 0.5 }}
+        >
+          🏗️ Stamp at Crosshair
+        </button>
+      </div>
+      <div style={{ fontSize: "var(--font-size-xs)", color: "var(--text-muted)", marginTop: "6px" }}>
+        Stamps the prefab at the crosshair's adjacent cell as one undoable transaction.
+      </div>
+    </div>
+  );
+}
+
+// -----------------------------------------------------------------------------
 // Block Manifests & Host Registration
 // -----------------------------------------------------------------------------
 
@@ -1434,12 +1590,34 @@ export const logManifest: BlockManifest = {
   ports: { in: [{ name: "events", type: "event[]" }], out: [] }
 };
 
+export const sceneHierarchyManifest: BlockManifest = {
+  id: "engine.map.scene",
+  name: "Scene Hierarchy & History",
+  version: "0.2.0",
+  family: "console",
+  substrates: ["react"],
+  size: { min: [320, 200], ideal: [540, 300] },
+  ports: { in: [{ name: "events", type: "event[]" }], out: [] }
+};
+
+export const prefabBrowserManifest: BlockManifest = {
+  id: "engine.map.prefabs",
+  name: "Prefab Catalog & Stamp",
+  version: "0.2.0",
+  family: "console",
+  substrates: ["react"],
+  size: { min: [320, 180], ideal: [540, 260] },
+  ports: { in: [{ name: "events", type: "event[]" }], out: [] }
+};
+
 export function registerEngineBlocks(host: ReactBlockHost): void {
   host.register(mapInspectorManifest.id, { manifest: mapInspectorManifest, Component: MapInspectorBlock });
   host.register(mapToolsManifest.id, { manifest: mapToolsManifest, Component: MapToolsBlock });
   host.register(mapSyncManifest.id, { manifest: mapSyncManifest, Component: MapSyncBlock });
   host.register(mapTerrainManifest.id, { manifest: mapTerrainManifest, Component: WorldTerrainBlock });
   host.register(structuralMatrixManifest.id, { manifest: structuralMatrixManifest, Component: StructuralMatrixBlock });
+  host.register(sceneHierarchyManifest.id, { manifest: sceneHierarchyManifest, Component: SceneHierarchyBlock });
+  host.register(prefabBrowserManifest.id, { manifest: prefabBrowserManifest, Component: PrefabBrowserBlock });
 
   host.register(cameraPerspectiveManifest.id, { manifest: cameraPerspectiveManifest, Component: CameraPerspectiveBlock });
   host.register(locomotionManifest.id, { manifest: locomotionManifest, Component: LocomotionBlock });
