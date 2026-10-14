@@ -30,6 +30,15 @@ export const SECTIONS: Section[] = [
     ]
   },
   {
+    id: "scene",
+    label: "Scene & Prefabs",
+    blurb: "Editor scene hierarchy, undo/redo history, and prefab stamping with rotation.",
+    slots: [
+      { block: "engine.map.scene", span: "pair", label: "Scene Hierarchy & History" },
+      { block: "engine.map.prefabs", span: "pair", label: "Prefab Catalog & Stamp" }
+    ]
+  },
+  {
     id: "model",
     label: "Model & Character",
     blurb: "Humanoid skeletal rig, limb kinematics, procedural locomotion, and camera perspective.",
