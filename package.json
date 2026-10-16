@@ -20,7 +20,9 @@
     "smoke:m5": "node scripts/smoke-m5.mjs",
     "smoke:m6": "node scripts/smoke-m6.mjs",
     "smoke:m7": "node scripts/smoke-m7.mjs",
-    "smoke:a2": "node scripts/smoke-a2.mjs"
+    "smoke:a2": "node scripts/smoke-a2.mjs",
+    "harness:dev": "tauri dev --config src-tauri/tauri.harness.conf.json",
+    "harness:build": "tauri build --config src-tauri/tauri.harness.conf.json"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.11.4"
