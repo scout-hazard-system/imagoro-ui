@@ -8,7 +8,21 @@ import "@imagoro/renderer-react/app.css";
 import "leaflet/dist/leaflet.css";
 import "../../../design/gen.css";
 import { SECTIONS, type Section, type SlotSpec } from "./sections.js";
-import { listTools, callTool, toolResultEvent, mcpErrorEvent, broker, getMcpRole, type McpToolDef } from "./mcp.js";
+import {
+  listTools,
+  callTool,
+  toolResultEvent,
+  mcpErrorEvent,
+  broker,
+  getMcpRole,
+  IN_DESKTOP,
+  stackStatus,
+  stackStart,
+  kaoConfig,
+  type McpToolDef,
+  type StackCheck,
+  type KaoConfig
+} from "./mcp.js";
 import "./shell.css";
 
 const bus = new EventBus();
@@ -54,6 +68,68 @@ function ToolPills({ tools, onRun }: { tools: McpToolDef[]; onRun: (name: string
           {t.name}
         </button>
       ))}
+    </div>
+  );
+}
+
+/** Desktop only: what the local harnesses depend on, with a one-click (re)start. */
+function LocalStack() {
+  const [checks, setChecks] = useState<StackCheck[]>([]);
+  const [cfg, setCfg] = useState<KaoConfig | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function refresh() {
+    try {
+      setChecks(await stackStatus());
+    } catch (err) {
+      bus.dispatch({ type: "console/log", ts: Date.now(), payload: { line: `[stack] status failed: ${String(err)}` } });
+    }
+  }
+
+  async function start() {
+    setBusy(true);
+    try {
+      const msg = await stackStart();
+      bus.dispatch({ type: "console/log", ts: Date.now(), payload: { line: `[stack] ${msg}` } });
+      // Ollama + both proxies take a few seconds to bind.
+      await new Promise((r) => setTimeout(r, 8000));
+      await refresh();
+    } catch (err) {
+      bus.dispatch({ type: "console/log", ts: Date.now(), payload: { line: `[stack] start failed: ${String(err)}` } });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  useEffect(() => {
+    void refresh();
+    kaoConfig().then(setCfg, () => setCfg(null));
+    const t = setInterval(() => void refresh(), 30_000);
+    return () => clearInterval(t);
+  }, []);
+
+  const localDown = checks.some((c) => !c.up && c.addr.startsWith("127.0.0.1"));
+  return (
+    <div className="card tools-card">
+      <div className="toolbar">
+        <span className="muted">local stack:</span>
+        {checks.map((c) => (
+          <span key={c.name} className={`pill ${c.up ? "ok" : "mute"}`} title={c.addr}>
+            {c.name} {c.up ? "up" : "down"}
+          </span>
+        ))}
+        <button className="pill tool" onClick={() => void refresh()}>
+          refresh
+        </button>
+        <button className="pill tool" disabled={busy} onClick={() => void start()} title="Ollama + tool-role proxies (start-ollama-local.cmd)">
+          {busy ? "starting…" : localDown ? "start local stack" : "restart local stack"}
+        </button>
+      </div>
+      {cfg ? (
+        <p className="muted">
+          Kao gateway {cfg.url} · token {cfg.token_present ? "found" : "MISSING"} ({cfg.token_file})
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -168,10 +244,11 @@ function HarnessConsole() {
             <span className="muted">MCP-driven agentic harness · shared cluster · CLI & GUI config parity</span>
           </div>
           <div className="status-group">
-            <span className="pill mute">MCP /api/rpc (imagoro-harness)</span>
+            <span className="pill mute">{IN_DESKTOP ? "MCP via desktop bridge (kao_rpc)" : "MCP /api/rpc (imagoro-harness)"}</span>
             <span className="pill mute">blackboard config slot</span>
           </div>
         </header>
+        {IN_DESKTOP ? <LocalStack /> : null}
         {section?.id === "tools" ? (
           <div className="card tools-card">
             <ToolPills tools={tools} onRun={runTool} />

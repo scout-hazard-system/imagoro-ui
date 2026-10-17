@@ -2,8 +2,54 @@
 // Gateway (the ONE fetch chokepoint) and ToolBroker (capability/confirm/rate
 // gates). The raw fetch that used to live here is gone; the console no longer
 // owns any transport. Dev: vite proxies /api -> http://127.0.0.1:19001.
+// Desktop (Scout Harness exe): the Rust `kao_rpc` command carries the request;
+// it owns the gateway URL and the token, so neither is visible to this page.
+import { invoke, isTauri } from "@tauri-apps/api/core";
 import type { BusEvent } from "@imagoro/core";
 import { DEFAULT_ROLE, Gateway, gatewayErrorText, ToolBroker } from "@imagoro/core";
+
+export const IN_DESKTOP = isTauri();
+
+export interface StackCheck {
+  name: string;
+  addr: string;
+  up: boolean;
+}
+export interface KaoConfig {
+  url: string;
+  token_file: string;
+  token_present: boolean;
+}
+
+/** Desktop only: TCP reachability of the local engines, mesh peers, Kao and the blackboard. */
+export async function stackStatus(): Promise<StackCheck[]> {
+  const res = await invoke<{ checks: StackCheck[] }>("stack_status");
+  return res.checks;
+}
+
+/** Desktop only: run the same start script the Windows Startup folder uses. */
+export function stackStart(): Promise<string> {
+  return invoke<string>("stack_start");
+}
+
+export function kaoConfig(): Promise<KaoConfig> {
+  return invoke<KaoConfig>("kao_config");
+}
+
+/** fetch-shaped adapter so Gateway stays the one chokepoint in both modes. */
+const desktopFetch: typeof fetch = async (_url, init) => {
+  try {
+    const text = await invoke<string>("kao_rpc", { body: String(init?.body ?? "") });
+    return new Response(text, { status: 200, headers: { "Content-Type": "application/json" } });
+  } catch (err) {
+    // A JSON-RPC error (not an HTTP status) so the console shows the real reason
+    // (e.g. "gateway token not readable"); Gateway reduces non-2xx to a bare code.
+    return new Response(JSON.stringify({ jsonrpc: "2.0", id: null, error: { code: -32000, message: String(err) } }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" }
+    });
+  }
+};
 
 export interface McpToolDef {
   name: string;
@@ -13,7 +59,8 @@ export interface McpToolDef {
 
 export const mcpGateway = new Gateway({
   base: "/api",
-  token: import.meta.env.VITE_IMAGORO_MCP_TOKEN as string | undefined,
+  token: IN_DESKTOP ? undefined : (import.meta.env.VITE_IMAGORO_MCP_TOKEN as string | undefined),
+  ...(IN_DESKTOP ? { fetchImpl: desktopFetch } : {}),
   timeoutMs: 20_000,
   maxBodyBytes: 2 * 1024 * 1024
 });
