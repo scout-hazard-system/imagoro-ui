@@ -33,7 +33,23 @@ describe("command-center sections", () => {
       "imagoro.pipeline",
       "imagoro.graph",
       "imagoro.intent",
-      "imagoro.sidebar"
+      "imagoro.sidebar",
+      "engine.map.inspector",
+      "engine.map.tools",
+      "engine.map.structural",
+      "engine.map.sync",
+      "engine.map.terrain",
+      "engine.map.scene",
+      "engine.map.prefabs",
+      "engine.model.camera",
+      "engine.model.locomotion",
+      "engine.model.character",
+      "engine.model.weapons",
+      "engine.visuals.params",
+      "engine.visuals.presets",
+      "engine.visuals.lighting",
+      "engine.status.telemetry",
+      "engine.console.log"
     ]);
     for (const s of SECTIONS) {
       for (const slot of s.slots) expect(known.has(slot.block)).toBe(true);
